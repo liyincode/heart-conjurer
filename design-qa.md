@@ -54,6 +54,7 @@
 - Anchored hand-driven formations to the stage center, while keeping hand position for small pointer feedback and arrow direction.
 - Added gesture icons to the desktop gesture mapping panel so users can see how to pose each hand.
 - Reworked gesture mapping so single-hand finger heart triggers the heart, both hands doing finger hearts triggers double heart, open palm triggers galaxy, pistol triggers arrow, index finger triggers chase, and fist triggers gather.
+- Refined the finger-heart icon toward the Korean finger-heart pose, and renamed open palm/fist actions to scatter/gather language in the UI.
 
 **Follow-up Polish**
 - A future pass could tune the preview panel size after testing with a real camera feed on the target display.

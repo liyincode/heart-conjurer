@@ -334,11 +334,11 @@
   <div id="legend">
     <h3>手势映射</h3>
     <div class="row">
-      <span class="gesture-icon" aria-hidden="true"><svg viewBox="0 0 36 36"><path d="M11 8l7 9M25 8l-7 9"/><path d="M18 29l-7-7c-4-4-3-10 2-10 2 0 4 2 5 4 1-2 3-4 5-4 5 0 6 6 2 10l-7 7z"/></svg></span>
+      <span class="gesture-icon" aria-hidden="true"><svg viewBox="0 0 36 36"><path d="M14 30v-7l-5-5c-1.4-1.4-.2-3.5 1.6-2.6l4.4 2.2"/><path d="M15 22l10-10c1.3-1.3 3.4.4 2.1 1.9l-8.1 8.3"/><path d="M12 18l5.6-11c.9-1.8 3.4-.9 3 1l-2.2 11.5"/><path d="M15 25c3.4 3 8.8 3.5 11.2-.4l1.2-4"/><path d="M15 19l-2.5 3M18 21l-2 3"/><path d="M24 6c1.8-2.2 5 .2 3.1 2.5L24 12l-3.1-3.5C19 6.2 22.2 3.8 24 6z"/></svg></span>
       <span class="k">比心</span><span>心形盛放</span>
     </div>
     <div class="row">
-      <span class="gesture-icon" aria-hidden="true"><svg viewBox="0 0 36 36"><path d="M12 26l-4-4c-3-3-2-7 1-7 2 0 3 1 4 3 1-2 2-3 4-3 3 0 4 4 1 7l-4 4z"/><path d="M24 26l-4-4c-3-3-2-7 1-7 2 0 3 1 4 3 1-2 2-3 4-3 3 0 4 4 1 7l-4 4z"/></svg></span>
+      <span class="gesture-icon" aria-hidden="true"><svg viewBox="0 0 36 36"><path d="M8 28v-5l-3-3c-1-1 0-2.4 1.2-1.8l3 1.5"/><path d="M9 22l6.7-6.7c.9-.9 2.3.3 1.4 1.3l-5.4 5.6"/><path d="M7 19l3.8-7.4c.6-1.2 2.3-.6 2 0.7l-1.5 7.8"/><path d="M22 28v-5l-3-3c-1-1 0-2.4 1.2-1.8l3 1.5"/><path d="M23 22l6.7-6.7c.9-.9 2.3.3 1.4 1.3l-5.4 5.6"/><path d="M21 19l3.8-7.4c.6-1.2 2.3-.6 2 0.7l-1.5 7.8"/></svg></span>
       <span class="k">双比心</span><span>交叠双心</span>
     </div>
     <div class="row">
@@ -351,13 +351,13 @@
     </div>
     <div class="row">
       <span class="gesture-icon" aria-hidden="true"><svg viewBox="0 0 36 36"><path d="M18 29V9M18 29l-7-16M18 29l7-16M18 29l-12-9M18 29l12-9"/><path d="M10 29h16"/></svg></span>
-      <span class="k">张掌</span><span>漫天星河</span>
+      <span class="k">手掌</span><span>散开</span>
     </div>
     <div class="row">
       <span class="gesture-icon" aria-hidden="true"><svg viewBox="0 0 36 36"><path d="M10 15h16c2 0 4 2 4 4v5c0 3-2 5-5 5H12c-3 0-5-2-5-5v-5c0-2 1-4 3-4z"/><path d="M12 15v-3M17 15v-4M22 15v-3M27 17v-3"/></svg></span>
-      <span class="k">握拳</span><span>万心归聚</span>
+      <span class="k">拳头</span><span>聚合</span>
     </div>
-    <div class="hint">键盘：1 心形 · 2 双心 · 3 箭 · 4 星河 · 5 归聚 · H 隐藏</div>
+    <div class="hint">键盘：1 心形 · 2 双心 · 3 箭 · 4 散开 · 5 聚合 · H 隐藏</div>
   </div>
 
   <div id="telemetry">
@@ -385,8 +385,8 @@
       <button class="mode-button" data-mode="rose"><span class="key">1</span><span class="name">心形</span></button>
       <button class="mode-button" data-mode="doubleheart"><span class="key">2</span><span class="name">双心</span></button>
       <button class="mode-button" data-mode="arrow"><span class="key">3</span><span class="name">箭</span></button>
-      <button class="mode-button" data-mode="galaxy"><span class="key">4</span><span class="name">星河</span></button>
-      <button class="mode-button" data-mode="gather"><span class="key">5</span><span class="name">归聚</span></button>
+      <button class="mode-button" data-mode="galaxy"><span class="key">4</span><span class="name">散开</span></button>
+      <button class="mode-button" data-mode="gather"><span class="key">5</span><span class="name">聚合</span></button>
     </div>
   </div>
 
@@ -653,8 +653,12 @@ function fingersOf(lm) {
 }
 function isFingerHeart(lm, ext = fingersOf(lm)) {
   const palm = Math.max(0.001, Math.hypot(lm[0].x - lm[9].x, lm[0].y - lm[9].y));
-  const pinch = Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y) < palm * 0.62;
-  return pinch && !ext[2] && !ext[3] && !ext[4];
+  const thumbToIndex = Math.min(
+    Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y),
+    Math.hypot(lm[4].x - lm[7].x, lm[4].y - lm[7].y),
+    Math.hypot(lm[4].x - lm[6].x, lm[4].y - lm[6].y)
+  );
+  return ext[1] && thumbToIndex < palm * 0.72 && !ext[2] && !ext[3] && !ext[4];
 }
 function classifyHand(lm) {
   const e = fingersOf(lm); const idx = e[1], mid = e[2], ring = e[3], pky = e[4], th = e[0];
@@ -662,7 +666,7 @@ function classifyHand(lm) {
   if (!idx && !mid && !ring && !pky) return 'gather';                  // 握拳
   if (th && idx && !mid && !ring && !pky) return 'arrow';              // 手枪
   if (idx && !mid && !ring && !pky) return 'chase';                    // 食指
-  if (((idx?1:0)+(mid?1:0)+(ring?1:0)+(pky?1:0)) >= 3) return 'galaxy'; // 张掌
+  if (((idx?1:0)+(mid?1:0)+(ring?1:0)+(pky?1:0)) >= 3) return 'galaxy'; // 手掌打开
   return null;
 }
 function sceneGesture() {
@@ -809,7 +813,7 @@ let committedG = null, pendG = null, pendCount = 0, nullCount = 0;
 let forcedMode = null, forcedUntil = 0;
 const MODE_LABEL = {
   chase: '群心逐指尖', rose: '心形盛放', doubleheart: '交叠双心',
-  arrow: '丘比特之箭', galaxy: '漫天星河', gather: '万心归聚', idle: '让指尖起舞',
+  arrow: '丘比特之箭', galaxy: '星河散开', gather: '万心聚合', idle: '让指尖起舞',
 };
 function forceMode(m) { forcedMode = m; forcedUntil = performance.now() + 14000; toast(MODE_LABEL[m] + ' （手动）'); }
 function decideMode() {
