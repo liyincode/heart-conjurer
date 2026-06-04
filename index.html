@@ -332,7 +332,7 @@
     <div class="row"><span class="k">双手</span><span>分裂 / 双心</span></div>
     <div class="row"><span class="k">手枪</span><span>定向 / 箭</span></div>
     <div class="row"><span class="k">握拳</span><span>收束 / 归聚</span></div>
-    <div class="hint">键盘：1 玫瑰 · 2 双心 · 3 箭 · 4 星河 · 5 归聚 · 空格追随 · H 隐藏</div>
+    <div class="hint">键盘：1 心形 · 2 双心 · 3 箭 · 4 星河 · 5 归聚 · 空格追随 · H 隐藏</div>
   </div>
 
   <div id="telemetry">
@@ -358,7 +358,7 @@
     </div>
     <div id="mode"><span>让指尖起舞</span></div>
     <div class="mode-actions" aria-label="模式切换">
-      <button class="mode-button" data-mode="rose"><span class="key">1</span><span class="name">玫瑰</span></button>
+      <button class="mode-button" data-mode="rose"><span class="key">1</span><span class="name">心形</span></button>
       <button class="mode-button" data-mode="doubleheart"><span class="key">2</span><span class="name">双心</span></button>
       <button class="mode-button" data-mode="arrow"><span class="key">3</span><span class="name">箭</span></button>
       <button class="mode-button" data-mode="galaxy"><span class="key">4</span><span class="name">星河</span></button>
@@ -523,23 +523,6 @@ function buildDoubleHeart(n) {
   }
   return out;
 }
-function buildRose(n) {
-  const out = []; const petals = Math.floor(n * 0.86);
-  for (let i = 0; i < n; i++) {
-    if (i < petals) {
-      const f = i / petals, th = f * Math.PI;          // k=5 玫瑰，[0,π] 描一遍 5 瓣
-      const env = Math.cos(5 * th);
-      const layer = 0.42 + 0.58 * ((i * 0.61803) % 1); // 伪随机径向填充花瓣
-      const r = env * layer;
-      out.push([r * Math.cos(th), r * Math.sin(th)]);
-    } else {                                            // 花心螺旋
-      const g = (i - petals) / (n - petals);
-      const a = g * Math.PI * 7, rr = 0.16 * g;
-      out.push([rr * Math.cos(a), rr * Math.sin(a)]);
-    }
-  }
-  return out;
-}
 function sampleSegments(segs, n) {
   let total = 0; const L = segs.map(s => { const d = Math.hypot(s[2]-s[0], s[3]-s[1]); total += d; return d; });
   const out = [];
@@ -592,11 +575,12 @@ function buildGalaxy(n) {
   }
   return out;
 }
+const HEARTFIELD = buildFilledHeart(COUNT);
 const SHAPES = {
   heart: buildHeart(COUNT),
-  heartfield: buildFilledHeart(COUNT),
+  heartfield: HEARTFIELD,
   doubleheart: buildDoubleHeart(COUNT),
-  rose: buildRose(COUNT),
+  rose: HEARTFIELD,
   arrow: buildArrow(COUNT),
   galaxy: buildGalaxy(COUNT),
 };
@@ -792,7 +776,7 @@ let mode = 'idle', prevMode = 'idle', modeEnterTime = 0;
 let committedG = null, pendG = null, pendCount = 0, nullCount = 0;
 let forcedMode = null, forcedUntil = 0;
 const MODE_LABEL = {
-  chase: '群心逐指尖', rose: '绽放玫瑰', doubleheart: '交叠双心',
+  chase: '群心逐指尖', rose: '心形盛放', doubleheart: '交叠双心',
   arrow: '丘比特之箭', galaxy: '漫天星河', gather: '万心归聚', idle: '让指尖起舞',
 };
 function forceMode(m) { forcedMode = m; forcedUntil = performance.now() + 14000; toast(MODE_LABEL[m] + ' （手动）'); }
@@ -884,7 +868,7 @@ function frame(now) {
   const center = { ...focus }; let scale = MIN * 0.24, angle = 0;
   const h0 = hands[0], mouseActive = now - mouse.lastMove < 6500 && mouse.y < H - (W < 960 ? 320 : 220);
   const handCenter = h0 ? focus : (mouseActive ? mouse : center);
-  if (mode === 'rose')        { Object.assign(center, handCenter); scale = MIN * 0.18 * (0.25 + 0.75*bloom); angle = t * 0.12; }
+  if (mode === 'rose')        { Object.assign(center, handCenter); scale = MIN * 0.27 * (0.94 + 0.06*beat); angle = Math.sin(t * 0.18) * 0.08; }
   else if (mode === 'arrow')  { Object.assign(center, handCenter); scale = MIN * 0.19; angle = h0 ? h0.stageDir : -0.5; }
   else if (mode === 'gather') { Object.assign(center, handCenter); scale = MIN * 0.1 * (0.6 + 0.4*beat); }
   else if (mode === 'doubleheart') {
@@ -1054,8 +1038,8 @@ function render(t, beat, center, pointers, scale) {
   const R = MIN * (0.23 + 0.1 * beat);
   ctx.globalAlpha = 0.26 + 0.22 * beat;
   ctx.drawImage(hg, visualCenter.x - R, visualCenter.y - R, R*2, R*2);
-  if (mode === 'chase' || mode === 'idle' || mode === 'galaxy') renderEnergyRibbons(t, beat, visualCenter, visualScale);
-  if (mode === 'chase' || mode === 'idle') renderHeartAura(t, beat, visualCenter, visualScale);
+  if (mode === 'chase' || mode === 'idle' || mode === 'rose' || mode === 'galaxy') renderEnergyRibbons(t, beat, visualCenter, visualScale);
+  if (mode === 'chase' || mode === 'idle' || mode === 'rose') renderHeartAura(t, beat, visualCenter, visualScale);
 
   // 指尖柔光
   ctx.globalAlpha = 0.42;
