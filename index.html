@@ -84,6 +84,24 @@
     text-shadow: 0 1px 8px rgba(0,0,0,.65);
   }
   .camera-head b { color: #8af7ff; font-weight: 680; }
+  .camera-distance {
+    position: absolute; z-index: 2; left: 12px; right: 12px; bottom: 10px;
+    min-height: 26px; display: none; align-items: center; justify-content: center;
+    border-radius: 999px; border: 1px solid rgba(129, 180, 255, .18);
+    background: rgba(4, 8, 18, .58);
+    color: rgba(246, 237, 247, .78);
+    font-size: 11px; letter-spacing: .08em; text-shadow: 0 1px 8px rgba(0,0,0,.7);
+  }
+  #cameraPanel.connected .camera-distance { display: flex; }
+  #cameraPanel[data-distance="ok"] .camera-distance { color: #8af7ff; border-color: rgba(24, 239, 216, .36); }
+  #cameraPanel[data-distance="close"],
+  #cameraPanel[data-distance="edge"] { border-color: rgba(255, 137, 190, .36); }
+  #cameraPanel[data-distance="close"] .camera-distance,
+  #cameraPanel[data-distance="edge"] .camera-distance {
+    color: #ffd8ec; border-color: rgba(255, 137, 190, .5);
+    background: rgba(57, 12, 38, .54);
+  }
+  #cameraPanel[data-distance="far"] .camera-distance { color: #cdefff; border-color: rgba(129, 180, 255, .42); }
   .camera-empty {
     position: absolute; inset: 0; display: grid; place-items: center;
     padding: 28px; text-align: center; color: var(--dim);
@@ -98,20 +116,6 @@
       linear-gradient(180deg, rgba(0,0,0,.28) 0%, transparent 24%, transparent 58%, rgba(0,0,0,.42) 100%);
     mix-blend-mode: multiply;
   }
-
-  #title {
-    position: fixed; z-index: 5; top: 28px; left: 32px;
-    pointer-events: none; transition: opacity 1s ease;
-  }
-  #title h1 {
-    font-size: clamp(27px, 3.1vw, 44px); line-height: 1; font-weight: 760;
-    letter-spacing: .18em;
-    background: linear-gradient(90deg, #ff70ad 0%, #fff0f8 48%, #8af7ff 100%);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    text-shadow: 0 0 26px rgba(255, 75, 144, .4);
-  }
-  #title p { margin-top: 10px; font-size: 11px; letter-spacing: .48em; color: var(--muted); }
-  #title.faded { opacity: .48; }
 
   #status {
     position: fixed; z-index: 5; top: 28px; right: 32px;
@@ -151,8 +155,8 @@
   }
 
   #legend {
-    position: fixed; z-index: 5; left: 32px; top: 132px;
-    width: 238px; padding: 18px 16px; border-radius: 22px;
+    position: fixed; z-index: 5; left: 32px; top: 32px;
+    width: 252px; padding: 18px 16px; border-radius: 22px;
     background: var(--panel); border: 1px solid rgba(129, 180, 255, .18);
     backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
     font-size: 12px; color: rgba(246, 237, 247, .84);
@@ -161,19 +165,19 @@
   }
   #legend.hidden { opacity: 0; transform: translateY(12px); pointer-events: none; }
   #legend h3 { font-size: 13px; letter-spacing: .16em; color: #fff2f8; margin-bottom: 14px; font-weight: 680; }
-  #legend .row { display: grid; grid-template-columns: 34px 48px 1fr; gap: 10px; align-items: center; min-height: 42px; padding: 8px 0; border-top: 1px solid rgba(255,255,255,.06); }
+  #legend .row { display: grid; grid-template-columns: 50px 50px 1fr; gap: 10px; align-items: center; min-height: 58px; padding: 10px 0; border-top: 1px solid rgba(255,255,255,.06); }
   #legend .row:first-of-type { border-top: 0; }
   #legend .row .k { color: #ff9fc8; font-weight: 680; }
   #legend .row span:last-child { color: var(--muted); line-height: 1.45; }
   .gesture-icon {
-    width: 32px; height: 32px; display: grid; place-items: center;
-    color: #fff0f7; border-radius: 10px;
-    background: radial-gradient(circle at 50% 35%, rgba(255, 96, 165, .24), rgba(12, 20, 36, .74));
-    border: 1px solid rgba(255, 155, 205, .2);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), 0 0 18px rgba(255,79,150,.12);
+    width: 48px; height: 48px; display: block;
+    border-radius: 15px; overflow: hidden;
+    background:
+      radial-gradient(circle at 50% 48%, rgba(255, 91, 166, .16), rgba(10, 12, 25, .72) 70%),
+      rgba(8, 12, 24, .72);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), -3px 0 12px rgba(31, 239, 229, .1), 3px 0 14px rgba(255, 79, 150, .14);
   }
-  .gesture-icon svg { width: 25px; height: 25px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .gesture-icon .fill { fill: currentColor; stroke: none; opacity: .92; }
+  .gesture-icon img { width: 100%; height: 100%; display: block; object-fit: cover; }
   #legend .hint { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.07); font-size: 11px; line-height: 1.6; color: var(--dim); }
 
   #telemetry {
@@ -254,27 +258,6 @@
     border-radius: 16px;
   }
 
-  #overlay {
-    position: fixed; inset: 0; z-index: 6; pointer-events: none;
-    background:
-      radial-gradient(420px 320px at 53% 63%, rgba(255, 79, 150, .22), transparent 72%),
-      linear-gradient(180deg, rgba(0,0,0,.2), transparent 38%, rgba(0,0,0,.2));
-    transition: opacity .8s ease;
-  }
-  #overlay.gone { opacity: 0; pointer-events: none; }
-  .start-panel {
-    position: absolute; left: 50%; bottom: 210px; transform: translateX(-50%);
-    width: min(620px, calc(100vw - 64px)); text-align: center;
-  }
-  .start-panel .big {
-    font-size: clamp(34px, 6vw, 76px); line-height: 1; font-weight: 780; letter-spacing: .16em;
-    background: linear-gradient(90deg, #ff75ae, #fff1f8 48%, #8df7ff);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    text-shadow: 0 0 36px rgba(255,79,150,.44);
-  }
-  .start-panel p {
-    margin-top: 18px; font-size: 15px; line-height: 1.8; letter-spacing: .06em; color: rgba(246,237,247,.74);
-  }
   .privacy {
     position: fixed; z-index: 9; left: 50%; bottom: 8px; transform: translateX(-50%);
     font-size: 11px; letter-spacing: .08em; color: rgba(246,237,247,.32);
@@ -291,11 +274,10 @@
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   @media (max-width: 960px) {
-    #title { top: 18px; left: 18px; }
-    #title h1 { font-size: 28px; }
     #status { top: 18px; right: 18px; min-height: 38px; font-size: 12px; padding: 8px 12px; }
     #cameraPanel { right: 12px; bottom: 324px; width: 160px; border-radius: 16px; }
     .camera-head { top: 7px; left: 9px; right: 9px; font-size: 9px; }
+    .camera-distance { left: 9px; right: 9px; bottom: 7px; min-height: 22px; font-size: 9px; }
     .camera-empty { padding: 18px; font-size: 10px; }
     #legend, #telemetry { display: none; }
     #console {
@@ -308,8 +290,6 @@
     .mode-actions { order: 3; overflow: hidden; justify-content: stretch; }
     .mode-button { min-width: 0; min-height: 74px; padding: 10px 6px; }
     .mode-button .name { font-size: 14px; }
-    .start-panel { bottom: 300px; }
-    .start-panel p { font-size: 13px; }
     .privacy { display: none; }
   }
 </style>
@@ -322,42 +302,39 @@
     <canvas id="handPreview"></canvas>
     <div class="camera-head"><span>识别预览</span><b id="cameraState">待连接</b></div>
     <div class="camera-empty">开启摄像头后，这里会显示实时画面和手部关键点</div>
+    <div id="distanceHint" class="camera-distance">手放入预览框</div>
   </div>
   <div id="vignette"></div>
 
-  <div id="title">
-    <h1>徒手造心</h1>
-    <p>HEART · CONJURER</p>
-  </div>
   <div id="status">准备识别 · <b>低延迟</b></div>
 
   <div id="legend">
     <h3>手势映射</h3>
     <div class="row">
-      <span class="gesture-icon" aria-hidden="true"><svg viewBox="0 0 36 36"><path d="M14 30v-7l-5-5c-1.4-1.4-.2-3.5 1.6-2.6l4.4 2.2"/><path d="M15 22l10-10c1.3-1.3 3.4.4 2.1 1.9l-8.1 8.3"/><path d="M12 18l5.6-11c.9-1.8 3.4-.9 3 1l-2.2 11.5"/><path d="M15 25c3.4 3 8.8 3.5 11.2-.4l1.2-4"/><path d="M15 19l-2.5 3M18 21l-2 3"/><path d="M24 6c1.8-2.2 5 .2 3.1 2.5L24 12l-3.1-3.5C19 6.2 22.2 3.8 24 6z"/></svg></span>
+      <span class="gesture-icon" aria-hidden="true"><img src="assets/gestures/heart.png?v=2" alt=""></span>
       <span class="k">比心</span><span>心形盛放</span>
     </div>
     <div class="row">
-      <span class="gesture-icon" aria-hidden="true"><svg viewBox="0 0 36 36"><path d="M8 28v-5l-3-3c-1-1 0-2.4 1.2-1.8l3 1.5"/><path d="M9 22l6.7-6.7c.9-.9 2.3.3 1.4 1.3l-5.4 5.6"/><path d="M7 19l3.8-7.4c.6-1.2 2.3-.6 2 0.7l-1.5 7.8"/><path d="M22 28v-5l-3-3c-1-1 0-2.4 1.2-1.8l3 1.5"/><path d="M23 22l6.7-6.7c.9-.9 2.3.3 1.4 1.3l-5.4 5.6"/><path d="M21 19l3.8-7.4c.6-1.2 2.3-.6 2 0.7l-1.5 7.8"/></svg></span>
-      <span class="k">双比心</span><span>交叠双心</span>
+      <span class="gesture-icon" aria-hidden="true"><img src="assets/gestures/doubleheart.png?v=2" alt=""></span>
+      <span class="k">双比心</span><span>并排双心</span>
     </div>
     <div class="row">
-      <span class="gesture-icon" aria-hidden="true"><svg viewBox="0 0 36 36"><path d="M18 29V7"/><path d="M14 21c-3 2-4 5-2 7h12c2-2 1-5-2-7"/><path d="M21 18h5M21 22h5"/></svg></span>
+      <span class="gesture-icon" aria-hidden="true"><img src="assets/gestures/point.png?v=2" alt=""></span>
       <span class="k">食指</span><span>群心追指尖</span>
     </div>
     <div class="row">
-      <span class="gesture-icon" aria-hidden="true"><svg viewBox="0 0 36 36"><path d="M8 23h17l5 4"/><path d="M13 23l7-12"/><path d="M12 27h14"/><path d="M16 27v4M21 27v4"/></svg></span>
+      <span class="gesture-icon" aria-hidden="true"><img src="assets/gestures/gun.png?v=2" alt=""></span>
       <span class="k">手枪</span><span>丘比特箭</span>
     </div>
     <div class="row">
-      <span class="gesture-icon" aria-hidden="true"><svg viewBox="0 0 36 36"><path d="M18 29V9M18 29l-7-16M18 29l7-16M18 29l-12-9M18 29l12-9"/><path d="M10 29h16"/></svg></span>
+      <span class="gesture-icon" aria-hidden="true"><img src="assets/gestures/palm.png?v=2" alt=""></span>
       <span class="k">手掌</span><span>散开</span>
     </div>
     <div class="row">
-      <span class="gesture-icon" aria-hidden="true"><svg viewBox="0 0 36 36"><path d="M10 15h16c2 0 4 2 4 4v5c0 3-2 5-5 5H12c-3 0-5-2-5-5v-5c0-2 1-4 3-4z"/><path d="M12 15v-3M17 15v-4M22 15v-3M27 17v-3"/></svg></span>
+      <span class="gesture-icon" aria-hidden="true"><img src="assets/gestures/fist.png?v=2" alt=""></span>
       <span class="k">拳头</span><span>聚合</span>
     </div>
-    <div class="hint">键盘：1 心形 · 2 双心 · 3 箭 · 4 散开 · 5 聚合 · H 隐藏</div>
+    <div class="hint">快捷键：H 隐藏说明 · V 预览 · M 心跳音</div>
   </div>
 
   <div id="telemetry">
@@ -367,13 +344,6 @@
     <div class="meter-row"><span>粒子密度</span><div class="meter"><i id="mDensity"></i></div><b id="vDensity">62%</b></div>
     <div class="meter-row"><span>心能量</span><div class="meter"><i id="mHeart"></i></div><b id="vHeart">0%</b></div>
     <div class="meter-row"><span>帧率</span><div class="meter"><i id="mFps"></i></div><b id="vFps">60</b></div>
-  </div>
-
-  <div id="overlay">
-    <div class="start-panel">
-      <div class="big">徒手造心</div>
-      <p>把指尖伸进光场，群心会顺着你的轨迹聚拢、分裂、盛放。</p>
-    </div>
   </div>
 
   <div id="console">
@@ -397,14 +367,14 @@
 <script type="module">
 /* =========================================================================
    徒手造心 · Heart Conjurer
-   - 手势识别：MediaPipe Tasks HandLandmarker (现成开源库，CDN 动态加载)
+   - 手势识别：MediaPipe Tasks HandLandmarker (运行库 CDN，模型本地加载)
    - 渲染：Canvas2D 预渲染发光爱心精灵 + 叠加混合 + 拖尾余晖
-   - 摄像头体验为主：无摄像头时保留待机舞台和键盘锁定模式
+   - 摄像头体验为主：手势直接驱动画面
    ========================================================================= */
 
 const TASKS_CDN = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18";
 const WASM_CDN  = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/wasm";
-const MODEL_URL = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
+const MODEL_URL = "assets/mediapipe/hand_landmarker.task";
 
 // ---------- DOM ----------
 const canvas = document.getElementById('scene');
@@ -414,11 +384,10 @@ const cameraPanel = document.getElementById('cameraPanel');
 const previewCanvas = document.getElementById('handPreview');
 const previewCtx = previewCanvas.getContext('2d');
 const cameraState = document.getElementById('cameraState');
+const distanceHint = document.getElementById('distanceHint');
 const elStatus = document.getElementById('status');
 const elMode = document.getElementById('mode').querySelector('span');
-const elTitle = document.getElementById('title');
 const elLegend = document.getElementById('legend');
-const elOverlay = document.getElementById('overlay');
 const elToast = document.getElementById('toast');
 const btnCam = document.getElementById('btnCam');
 const modeButtons = [...document.querySelectorAll('[data-mode]')];
@@ -538,10 +507,8 @@ function buildDoubleHeart(n) {
   for (let i = 0; i < n; i++) {
     const [hx, hy] = heartXY(((i >> 1) / half) * TAU);
     const left = (i & 1) === 0;
-    const s = 0.78, off = 0.42, tilt = left ? 0.12 : -0.12;
-    const rx = hx * Math.cos(tilt) - hy * Math.sin(tilt);
-    const ry = hx * Math.sin(tilt) + hy * Math.cos(tilt);
-    out.push([rx * s + (left ? -off : off), ry * s - 0.05]);
+    const s = 0.58, off = 0.74;
+    out.push([hx * s + (left ? -off : off), hy * s - 0.02]);
   }
   return out;
 }
@@ -629,6 +596,17 @@ let visionMod = null, landmarker = null, stream = null, handMode = false;
 let hands = [];                 // 每帧解析后的手
 let lastTs = 0;
 let previewStatus = '待连接';
+let warmupPromise = null;
+
+function warmupHandAssets() {
+  if (!warmupPromise) {
+    warmupPromise = Promise.allSettled([
+      fetch(MODEL_URL, { cache: 'force-cache' }),
+      visionMod ? Promise.resolve(visionMod) : import(TASKS_CDN).then(mod => (visionMod = mod)),
+    ]);
+  }
+  return warmupPromise;
+}
 
 function toCanvas(pt) { return { x: (1 - pt.x) * W, y: pt.y * H }; } // 镜像 x
 function stageFocus() {
@@ -636,11 +614,11 @@ function stageFocus() {
 }
 function toStage(pt) {
   const focus = stageFocus();
-  const x = clamp(((1 - pt.x) - 0.5) / 0.42, -1, 1);
-  const y = clamp((pt.y - 0.5) / 0.38, -1, 1);
+  const x = clamp(((1 - pt.x) - 0.5) / 0.5, -1, 1);
+  const y = clamp((pt.y - 0.46) / 0.46, -1, 1);
   return {
-    x: focus.x + x * MIN * 0.08,
-    y: focus.y + y * MIN * 0.055,
+    x: focus.x + x * MIN * 0.23,
+    y: focus.y + y * MIN * 0.18,
   };
 }
 function fingersOf(lm) {
@@ -651,20 +629,33 @@ function fingersOf(lm) {
   for (let k = 0; k < 4; k++) ext[k+1] = d(pip[k][0], 0) > d(pip[k][1], 0) * 1.03;
   return ext;
 }
-function isFingerHeart(lm, ext = fingersOf(lm)) {
+function pointSegmentDistance(p, a, b) {
+  const vx = b.x - a.x, vy = b.y - a.y;
+  const t = clamp(((p.x - a.x) * vx + (p.y - a.y) * vy) / Math.max(0.0001, vx * vx + vy * vy), 0, 1);
+  return Math.hypot(p.x - (a.x + vx * t), p.y - (a.y + vy * t));
+}
+function thumbIndexGap(lm) {
   const palm = Math.max(0.001, Math.hypot(lm[0].x - lm[9].x, lm[0].y - lm[9].y));
-  const thumbToIndex = Math.min(
-    Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y),
-    Math.hypot(lm[4].x - lm[7].x, lm[4].y - lm[7].y),
-    Math.hypot(lm[4].x - lm[6].x, lm[4].y - lm[6].y)
+  const tip = lm[4];
+  const gap = Math.min(
+    pointSegmentDistance(tip, lm[6], lm[8]),
+    Math.hypot(tip.x - lm[6].x, tip.y - lm[6].y),
+    Math.hypot(tip.x - lm[7].x, tip.y - lm[7].y),
+    Math.hypot(tip.x - lm[8].x, tip.y - lm[8].y)
   );
-  return ext[1] && thumbToIndex < palm * 0.72 && !ext[2] && !ext[3] && !ext[4];
+  return gap / palm;
+}
+function isFingerHeart(lm, ext = fingersOf(lm)) {
+  return ext[0] && ext[1] && thumbIndexGap(lm) < 0.95 && !ext[2] && !ext[3] && !ext[4];
+}
+function isFingerGun(lm, ext = fingersOf(lm)) {
+  return ext[0] && ext[1] && thumbIndexGap(lm) >= 1.12 && !ext[2] && !ext[3] && !ext[4];
 }
 function classifyHand(lm) {
   const e = fingersOf(lm); const idx = e[1], mid = e[2], ring = e[3], pky = e[4], th = e[0];
   if (isFingerHeart(lm, e)) return 'rose';                            // 单手比心
   if (!idx && !mid && !ring && !pky) return 'gather';                  // 握拳
-  if (th && idx && !mid && !ring && !pky) return 'arrow';              // 手枪
+  if (isFingerGun(lm, e)) return 'arrow';                              // 手枪：拇指明显远离食指
   if (idx && !mid && !ring && !pky) return 'chase';                    // 食指
   if (((idx?1:0)+(mid?1:0)+(ring?1:0)+(pky?1:0)) >= 3) return 'galaxy'; // 手掌打开
   return null;
@@ -692,6 +683,7 @@ function parseHands(res) {
     hands.push({
       lm, pts, wrist: pts[0], indexTip: pts[8],
       stagePts, stageIndexTip: stagePts[8],
+      stagePalmCenter: toStage({ x: (lm[0].x + lm[5].x + lm[9].x + lm[13].x + lm[17].x) / 5, y: (lm[0].y + lm[5].y + lm[9].y + lm[13].y + lm[17].y) / 5 }),
       palmSize: Math.hypot(pts[0].x-pts[9].x, pts[0].y-pts[9].y),
       dir: Math.atan2(pts[8].y - pts[0].y, pts[8].x - pts[0].x),
       stageDir: Math.atan2(stagePts[8].y - stagePts[0].y, stagePts[8].x - stagePts[0].x),
@@ -699,14 +691,47 @@ function parseHands(res) {
   }
 }
 
+function setDistanceHint(kind, text) {
+  cameraPanel.dataset.distance = kind;
+  distanceHint.textContent = text;
+}
+function handFrameSize(lm) {
+  const xs = lm.map(p => p.x), ys = lm.map(p => p.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  return {
+    size: Math.max(maxX - minX, maxY - minY),
+    centerY: (minY + maxY) / 2,
+    nearEdge: minX < 0.06 || maxX > 0.94 || minY < 0.06 || maxY > 0.94,
+  };
+}
+function updateDistanceHint() {
+  if (!hands.length) {
+    setDistanceHint('idle', '手放入预览框');
+    return;
+  }
+  const frames = hands.map(hand => handFrameSize(hand.lm));
+  const size = Math.max(...frames.map(frame => frame.size));
+  const nearEdge = frames.some(frame => frame.nearEdge);
+  const centerY = frames.reduce((sum, frame) => sum + frame.centerY, 0) / frames.length;
+  if (nearEdge) setDistanceHint('edge', '整只手入镜');
+  else if (size > 0.52) setDistanceHint('close', '再后退一点');
+  else if (size > 0.44) setDistanceHint('close', '稍微后退一点');
+  else if (size < 0.23) setDistanceHint('far', '靠近一点');
+  else if (centerY > 0.68) setDistanceHint('edge', '手抬高一点');
+  else setDistanceHint('ok', '距离合适');
+}
+
 function renderHandPreview() {
   const w = previewCanvas.clientWidth, h = previewCanvas.clientHeight;
   previewCtx.clearRect(0, 0, w, h);
   if (!cameraPanel.classList.contains('connected')) {
     cameraState.textContent = previewStatus;
+    setDistanceHint('idle', '手放入预览框');
     return;
   }
   cameraState.textContent = handMode && landmarker ? (hands.length ? '识别中' : '寻找手') : previewStatus;
+  updateDistanceHint();
   if (!hands.length) return;
 
   previewCtx.save();
@@ -754,6 +779,7 @@ async function startCamera() {
     toast('请通过 http://localhost 或 https 打开后再开启摄像头');
     return;
   }
+  warmupHandAssets();
   btnCam.disabled = true;
   btnCam.textContent = '请求权限中';
   previewStatus = '请求权限';
@@ -806,20 +832,15 @@ async function startCamera() {
 }
 
 // =========================================================================
-//  模式判定（含去抖 + 键盘锁定）
+//  模式判定（含去抖）
 // =========================================================================
 let mode = 'idle', prevMode = 'idle', modeEnterTime = 0;
 let committedG = null, pendG = null, pendCount = 0, nullCount = 0;
-let forcedMode = null, forcedUntil = 0;
 const MODE_LABEL = {
-  chase: '群心逐指尖', rose: '心形盛放', doubleheart: '交叠双心',
+  chase: '群心逐指尖', rose: '心形盛放', doubleheart: '并排双心',
   arrow: '丘比特之箭', galaxy: '星河散开', gather: '万心聚合', idle: '让指尖起舞',
 };
-function forceMode(m) { forcedMode = m; forcedUntil = performance.now() + 14000; toast(MODE_LABEL[m] + ' （手动）'); }
 function decideMode() {
-  const now = performance.now();
-  if (forcedMode && now < forcedUntil) return forcedMode;
-  forcedMode = null;
   const g = sceneGesture();
   if (g === null) { if (++nullCount > 8) committedG = null; }
   else {
@@ -902,12 +923,15 @@ function frame(now) {
   const focus = stageFocus();
   const center = { ...focus }; let scale = MIN * 0.24, angle = 0;
   const h0 = hands[0];
-  const handCenter = h0 ? focus : center;
+  const handCenter = h0 ? h0.stagePalmCenter : center;
   if (mode === 'rose')        { Object.assign(center, handCenter); scale = MIN * 0.27 * (0.94 + 0.06*beat); angle = Math.sin(t * 0.18) * 0.08; }
   else if (mode === 'arrow')  { Object.assign(center, handCenter); scale = MIN * 0.19; angle = h0 ? h0.stageDir : -0.5; }
   else if (mode === 'gather') { Object.assign(center, handCenter); scale = MIN * 0.1 * (0.6 + 0.4*beat); }
   else if (mode === 'doubleheart') {
-    if (hands.length >= 2) Object.assign(center, focus);
+    if (hands.length >= 2) {
+      center.x = (hands[0].stagePalmCenter.x + hands[1].stagePalmCenter.x) / 2;
+      center.y = (hands[0].stagePalmCenter.y + hands[1].stagePalmCenter.y) / 2;
+    } else Object.assign(center, handCenter);
     scale = MIN * 0.19 * (0.4 + 0.6*bloom);
   }
   else if (mode === 'galaxy') { scale = MIN * 0.34 * (0.5 + 0.5*bloom); angle = t * 0.05; }
@@ -1030,27 +1054,19 @@ function renderPointerField(t, beat, center, pointers) {
   }
   for (const pt of pointers) {
     const attractor = mode === 'chase' ? chaseAttractor(pt) : center;
-    const pulse = 1 + beat * 0.28 + Math.sin(t * 5) * 0.04;
-    ctx.shadowColor = 'rgba(255,79,150,.85)';
-    ctx.shadowBlur = 22;
-    ctx.strokeStyle = 'rgba(255,234,246,.82)';
-    ctx.lineWidth = 1.2;
-    for (const r of [18, 32, 50]) {
-      ctx.globalAlpha = r === 18 ? .88 : .34;
-      ctx.beginPath();
-      ctx.arc(pt.x, pt.y, r * pulse, 0, TAU);
-      ctx.stroke();
-    }
     ctx.globalAlpha = .32;
     ctx.strokeStyle = 'rgba(24,239,216,.62)';
+    ctx.lineWidth = 1.2;
     ctx.beginPath();
     ctx.moveTo(pt.x, pt.y);
     ctx.quadraticCurveTo((pt.x + attractor.x) / 2, pt.y - MIN * .08, attractor.x, attractor.y);
     ctx.stroke();
-    ctx.globalAlpha = .9;
+    ctx.globalAlpha = .42;
+    ctx.shadowColor = 'rgba(255,79,150,.62)';
+    ctx.shadowBlur = 14;
     ctx.fillStyle = 'rgba(255,245,250,.92)';
     ctx.beginPath();
-    ctx.arc(pt.x, pt.y, 4.4 + beat * 2.2, 0, TAU);
+    ctx.arc(pt.x, pt.y, 2.8 + beat * 1.2, 0, TAU);
     ctx.fill();
   }
   ctx.restore();
@@ -1066,12 +1082,14 @@ function render(t, beat, center, pointers, scale) {
 
   ctx.globalCompositeOperation = 'lighter';
 
-  // 柔光底：心跳光晕
-  const haloHue = 330 + 24 * Math.sin(t * 0.2);
-  const hg = glowSprite(Math.round(haloHue));
-  const R = MIN * (0.23 + 0.1 * beat);
-  ctx.globalAlpha = 0.26 + 0.22 * beat;
-  ctx.drawImage(hg, visualCenter.x - R, visualCenter.y - R, R*2, R*2);
+  // 非心形模式保留轻柔能量底，心形/双心避免出现圆形靶心感。
+  if (mode !== 'rose' && mode !== 'doubleheart') {
+    const haloHue = 330 + 24 * Math.sin(t * 0.2);
+    const hg = glowSprite(Math.round(haloHue));
+    const R = MIN * (0.16 + 0.06 * beat);
+    ctx.globalAlpha = 0.14 + 0.12 * beat;
+    ctx.drawImage(hg, visualCenter.x - R, visualCenter.y - R, R*2, R*2);
+  }
   if (mode === 'chase' || mode === 'idle' || mode === 'rose' || mode === 'galaxy') renderEnergyRibbons(t, beat, visualCenter, visualScale);
   if (mode === 'chase' || mode === 'idle' || mode === 'rose') renderHeartAura(t, beat, visualCenter, visualScale);
 
@@ -1135,23 +1153,12 @@ setInterval(() => {
 
 window.addEventListener('keydown', e => {
   const k = e.key.toLowerCase();
-  if (k === '1') forceMode('rose');
-  else if (k === '2') forceMode('doubleheart');
-  else if (k === '3') forceMode('arrow');
-  else if (k === '4') forceMode('galaxy');
-  else if (k === '5') forceMode('gather');
-  else if (k === 'h') elLegend.classList.toggle('hidden');
+  if (k === 'h') elLegend.classList.toggle('hidden');
   else if (k === 'v') cameraPanel.classList.toggle('hidden');
   else if (k === 'm') { ensureAudio(); audioOn = !audioOn; if (audioOn && audio.state === 'suspended') audio.resume(); toast(audioOn ? '心跳音 · 开' : '心跳音 · 关'); }
 });
-modeButtons.forEach(btn => btn.addEventListener('click', () => {
-  enter();
-  forceMode(btn.dataset.mode);
-}));
 
 function enter() {
-  elOverlay.classList.add('gone');
-  setTimeout(() => elTitle.classList.add('faded'), 5000);
   ensureAudio(); if (audio && audio.state === 'suspended') audio.resume();
 }
 btnCam.addEventListener('click', () => { enter(); startCamera(); });
@@ -1159,6 +1166,8 @@ btnCam.addEventListener('click', () => { enter(); startCamera(); });
 // 启动渲染（即使未点开始也先把背景星河点亮）
 requestAnimationFrame(frame);
 status('准备识别 · <b>低延迟</b>');
+if ('requestIdleCallback' in window) requestIdleCallback(warmupHandAssets, { timeout: 1200 });
+else setTimeout(warmupHandAssets, 800);
 </script>
 </body>
 </html>
