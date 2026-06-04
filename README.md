@@ -1,5 +1,7 @@
 # 徒手造心 · Heart Conjurer
 
+![徒手造心摄像头手势生成爱心效果](assets/readme-cover.jpg)
+
 在线展示：https://liyincode.github.io/heart-conjurer/
 
 摄像头识别手势，挥手造出**成群发光的爱心**追着指尖飞；聚散变阵成 💗心形 / 💞双心 / 🏹丘比特之箭 / 🌌散开星河。霓虹流光、粒子拖尾、心跳光晕、柔光的梦幻浪漫画风。
