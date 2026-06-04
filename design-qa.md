@@ -14,6 +14,8 @@
 - Desktop resized arrow QA: `/Users/liyin/workspace/claude-code-test/heart-conjurer/design-captures/qa-arrow-resized.png`
 - Desktop resized chase QA: `/Users/liyin/workspace/claude-code-test/heart-conjurer/design-captures/qa-chase-resized.png`
 - Desktop DPR canvas fix QA: `/Users/liyin/workspace/claude-code-test/heart-conjurer/design-captures/qa-canvas-dpr-fix.png`
+- Desktop gesture icon QA: `/Users/liyin/workspace/claude-code-test/heart-conjurer/design-captures/qa-gesture-icons-desktop.png`
+- Mobile gesture icon QA: `/Users/liyin/workspace/claude-code-test/heart-conjurer/design-captures/qa-gesture-icons-mobile.png`
 
 **Viewport**
 - Desktop: 1440 x 1024
@@ -50,6 +52,8 @@
 - Reduced hand-driven formation scale, chase heart scale, pointer rings, and glow radius so recognized effects no longer fill most of the window.
 - Fixed the main canvas CSS size so the DPR-scaled backing buffer is rendered into the actual viewport instead of appearing 1.5x larger and shifting effects down/right.
 - Anchored hand-driven formations to the stage center, while keeping hand position for small pointer feedback and arrow direction.
+- Added gesture icons to the desktop gesture mapping panel so users can see how to pose each hand.
+- Reworked gesture mapping so single-hand finger heart triggers the heart, both hands doing finger hearts triggers double heart, open palm triggers galaxy, pistol triggers arrow, index finger triggers chase, and fist triggers gather.
 
 **Follow-up Polish**
 - A future pass could tune the preview panel size after testing with a real camera feed on the target display.

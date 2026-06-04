@@ -152,7 +152,7 @@
 
   #legend {
     position: fixed; z-index: 5; left: 32px; top: 132px;
-    width: 190px; padding: 18px 16px; border-radius: 22px;
+    width: 238px; padding: 18px 16px; border-radius: 22px;
     background: var(--panel); border: 1px solid rgba(129, 180, 255, .18);
     backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
     font-size: 12px; color: rgba(246, 237, 247, .84);
@@ -161,14 +161,23 @@
   }
   #legend.hidden { opacity: 0; transform: translateY(12px); pointer-events: none; }
   #legend h3 { font-size: 13px; letter-spacing: .16em; color: #fff2f8; margin-bottom: 14px; font-weight: 680; }
-  #legend .row { display: grid; grid-template-columns: 50px 1fr; gap: 12px; align-items: start; padding: 10px 0; border-top: 1px solid rgba(255,255,255,.06); }
+  #legend .row { display: grid; grid-template-columns: 34px 48px 1fr; gap: 10px; align-items: center; min-height: 42px; padding: 8px 0; border-top: 1px solid rgba(255,255,255,.06); }
   #legend .row:first-of-type { border-top: 0; }
   #legend .row .k { color: #ff9fc8; font-weight: 680; }
   #legend .row span:last-child { color: var(--muted); line-height: 1.45; }
+  .gesture-icon {
+    width: 32px; height: 32px; display: grid; place-items: center;
+    color: #fff0f7; border-radius: 10px;
+    background: radial-gradient(circle at 50% 35%, rgba(255, 96, 165, .24), rgba(12, 20, 36, .74));
+    border: 1px solid rgba(255, 155, 205, .2);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), 0 0 18px rgba(255,79,150,.12);
+  }
+  .gesture-icon svg { width: 25px; height: 25px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .gesture-icon .fill { fill: currentColor; stroke: none; opacity: .92; }
   #legend .hint { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.07); font-size: 11px; line-height: 1.6; color: var(--dim); }
 
   #telemetry {
-    position: fixed; z-index: 5; left: 32px; top: 556px;
+    position: fixed; z-index: 5; left: 32px; top: 576px;
     width: 230px; padding: 16px; border-radius: 20px;
     background: var(--panel); border: 1px solid rgba(129, 180, 255, .18);
     backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
@@ -324,11 +333,30 @@
 
   <div id="legend">
     <h3>手势映射</h3>
-    <div class="row"><span class="k">食指</span><span>聚心 / 发射</span></div>
-    <div class="row"><span class="k">张掌</span><span>扩散 / 盛放</span></div>
-    <div class="row"><span class="k">双手</span><span>分裂 / 双心</span></div>
-    <div class="row"><span class="k">手枪</span><span>定向 / 箭</span></div>
-    <div class="row"><span class="k">握拳</span><span>收束 / 归聚</span></div>
+    <div class="row">
+      <span class="gesture-icon" aria-hidden="true"><svg viewBox="0 0 36 36"><path d="M11 8l7 9M25 8l-7 9"/><path d="M18 29l-7-7c-4-4-3-10 2-10 2 0 4 2 5 4 1-2 3-4 5-4 5 0 6 6 2 10l-7 7z"/></svg></span>
+      <span class="k">比心</span><span>心形盛放</span>
+    </div>
+    <div class="row">
+      <span class="gesture-icon" aria-hidden="true"><svg viewBox="0 0 36 36"><path d="M12 26l-4-4c-3-3-2-7 1-7 2 0 3 1 4 3 1-2 2-3 4-3 3 0 4 4 1 7l-4 4z"/><path d="M24 26l-4-4c-3-3-2-7 1-7 2 0 3 1 4 3 1-2 2-3 4-3 3 0 4 4 1 7l-4 4z"/></svg></span>
+      <span class="k">双比心</span><span>交叠双心</span>
+    </div>
+    <div class="row">
+      <span class="gesture-icon" aria-hidden="true"><svg viewBox="0 0 36 36"><path d="M18 29V7"/><path d="M14 21c-3 2-4 5-2 7h12c2-2 1-5-2-7"/><path d="M21 18h5M21 22h5"/></svg></span>
+      <span class="k">食指</span><span>群心追指尖</span>
+    </div>
+    <div class="row">
+      <span class="gesture-icon" aria-hidden="true"><svg viewBox="0 0 36 36"><path d="M8 23h17l5 4"/><path d="M13 23l7-12"/><path d="M12 27h14"/><path d="M16 27v4M21 27v4"/></svg></span>
+      <span class="k">手枪</span><span>丘比特箭</span>
+    </div>
+    <div class="row">
+      <span class="gesture-icon" aria-hidden="true"><svg viewBox="0 0 36 36"><path d="M18 29V9M18 29l-7-16M18 29l7-16M18 29l-12-9M18 29l12-9"/><path d="M10 29h16"/></svg></span>
+      <span class="k">张掌</span><span>漫天星河</span>
+    </div>
+    <div class="row">
+      <span class="gesture-icon" aria-hidden="true"><svg viewBox="0 0 36 36"><path d="M10 15h16c2 0 4 2 4 4v5c0 3-2 5-5 5H12c-3 0-5-2-5-5v-5c0-2 1-4 3-4z"/><path d="M12 15v-3M17 15v-4M22 15v-3M27 17v-3"/></svg></span>
+      <span class="k">握拳</span><span>万心归聚</span>
+    </div>
     <div class="hint">键盘：1 心形 · 2 双心 · 3 箭 · 4 星河 · 5 归聚 · H 隐藏</div>
   </div>
 
@@ -421,7 +449,6 @@ const TAU = Math.PI * 2;
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const lerp = (a, b, t) => a + (b - a) * t;
 const rand = (a = 1, b = 0) => b + Math.random() * (a - b);
-const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 function toast(msg, ms = 2600) {
   elToast.textContent = msg; elToast.classList.add('show');
   clearTimeout(toast._t); toast._t = setTimeout(() => elToast.classList.remove('show'), ms);
@@ -624,19 +651,30 @@ function fingersOf(lm) {
   for (let k = 0; k < 4; k++) ext[k+1] = d(pip[k][0], 0) > d(pip[k][1], 0) * 1.03;
   return ext;
 }
+function isFingerHeart(lm, ext = fingersOf(lm)) {
+  const palm = Math.max(0.001, Math.hypot(lm[0].x - lm[9].x, lm[0].y - lm[9].y));
+  const pinch = Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y) < palm * 0.62;
+  return pinch && !ext[2] && !ext[3] && !ext[4];
+}
 function classifyHand(lm) {
   const e = fingersOf(lm); const idx = e[1], mid = e[2], ring = e[3], pky = e[4], th = e[0];
-  if (!idx && !mid && !ring && !pky) return 'gather';                // 握拳
-  if (th && idx && !mid && !ring && !pky) return 'arrow';            // 手枪
-  if (idx && !mid && !ring && !pky) return 'chase';                  // 食指
-  if (((idx?1:0)+(mid?1:0)+(ring?1:0)+(pky?1:0)) >= 3) return 'rose'; // 张掌
-  return 'chase';
+  if (isFingerHeart(lm, e)) return 'rose';                            // 单手比心
+  if (!idx && !mid && !ring && !pky) return 'gather';                  // 握拳
+  if (th && idx && !mid && !ring && !pky) return 'arrow';              // 手枪
+  if (idx && !mid && !ring && !pky) return 'chase';                    // 食指
+  if (((idx?1:0)+(mid?1:0)+(ring?1:0)+(pky?1:0)) >= 3) return 'galaxy'; // 张掌
+  return null;
 }
 function sceneGesture() {
   if (hands.length >= 2) {
-    const dd = dist(hands[0].wrist, hands[1].wrist);
-    const ps2 = (hands[0].palmSize + hands[1].palmSize) / 2;
-    return dd < ps2 * 3.4 ? 'doubleheart' : 'galaxy';
+    const g0 = classifyHand(hands[0].lm), g1 = classifyHand(hands[1].lm);
+    if (g0 === 'rose' && g1 === 'rose') return 'doubleheart';
+    if (g0 === 'gather' && g1 === 'gather') return 'gather';
+    if (g0 === 'galaxy' && g1 === 'galaxy') return 'galaxy';
+    if (g0 === 'arrow' || g1 === 'arrow') return 'arrow';
+    if (g0 === 'chase' || g1 === 'chase') return 'chase';
+    if (g0 === 'rose' || g1 === 'rose') return 'rose';
+    return g0 || g1;
   }
   if (hands.length === 1) return classifyHand(hands[0].lm);
   return null;
