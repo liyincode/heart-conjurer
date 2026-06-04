@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>徒手造心 · Heart Conjurer</title>
+<style>
+  :root {
+    --ink: #f6edf7;
+    --muted: rgba(246, 237, 247, .62);
+    --dim: rgba(246, 237, 247, .38);
+    --rose: #ff4f96;
+    --rose-2: #ff8ac1;
+    --cyan: #18efd8;
+    --blue: #49b7ff;
+    --panel: rgba(5, 12, 23, .68);
+    --panel-strong: rgba(8, 13, 28, .86);
+    --line: rgba(255, 137, 190, .22);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #02050b; }
+  body {
+    font-family: Inter, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--ink);
+    -webkit-user-select: none; user-select: none;
+    cursor: crosshair;
+  }
+
+  #bg {
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(900px 520px at 72% 38%, rgba(255, 45, 118, .32), transparent 66%),
+      radial-gradient(720px 460px at 19% 66%, rgba(18, 214, 232, .15), transparent 68%),
+      radial-gradient(1200px 720px at 58% 18%, rgba(106, 39, 103, .18), transparent 72%),
+      linear-gradient(180deg, #02050b 0%, #050712 48%, #02050b 100%);
+  }
+  #bg::before,
+  #bg::after {
+    content: "";
+    position: absolute; inset: 0;
+    pointer-events: none;
+  }
+  #bg::before {
+    background:
+      linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px),
+      linear-gradient(0deg, rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: radial-gradient(70% 62% at 50% 45%, rgba(0,0,0,.5), transparent 78%);
+    opacity: .22;
+  }
+  #bg::after {
+    background:
+      radial-gradient(70% 34% at 50% 96%, rgba(255, 58, 132, .18), transparent 70%),
+      linear-gradient(180deg, transparent 0 68%, rgba(0, 0, 0, .42) 100%);
+  }
+
+  #scene { position: fixed; inset: 0; z-index: 1; display: block; }
+
+  #cameraPanel {
+    position: fixed; z-index: 7; right: 32px; bottom: 196px;
+    width: min(300px, 23vw); aspect-ratio: 4 / 3; overflow: hidden;
+    border-radius: 22px; border: 1px solid rgba(129, 180, 255, .22);
+    background:
+      linear-gradient(180deg, rgba(9, 17, 31, .82), rgba(3, 7, 15, .92)),
+      radial-gradient(80% 80% at 50% 40%, rgba(255, 79, 150, .14), transparent 72%);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), 0 22px 70px rgba(0,0,0,.42);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  }
+  #cameraPanel.hidden { opacity: 0; transform: translateY(12px); pointer-events: none; }
+  #cam, #handPreview {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+  }
+  #cam {
+    object-fit: cover; transform: scaleX(-1);
+    opacity: 0; transition: opacity .35s ease;
+    pointer-events: none; filter: saturate(1.08) contrast(1.08);
+  }
+  #cameraPanel.connected #cam { opacity: .9; }
+  #handPreview { pointer-events: none; }
+  .camera-head {
+    position: absolute; z-index: 2; left: 12px; right: 12px; top: 10px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    font-size: 11px; letter-spacing: .1em; color: rgba(246,237,247,.78);
+    text-shadow: 0 1px 8px rgba(0,0,0,.65);
+  }
+  .camera-head b { color: #8af7ff; font-weight: 680; }
+  .camera-empty {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    padding: 28px; text-align: center; color: var(--dim);
+    font-size: 13px; line-height: 1.7; letter-spacing: .08em;
+  }
+  #cameraPanel.connected .camera-empty { display: none; }
+
+  #vignette {
+    position: fixed; inset: 0; z-index: 3; pointer-events: none;
+    background:
+      radial-gradient(90% 86% at 54% 42%, transparent 42%, rgba(2,5,11,.52) 78%, rgba(0,0,0,.88) 100%),
+      linear-gradient(180deg, rgba(0,0,0,.28) 0%, transparent 24%, transparent 58%, rgba(0,0,0,.42) 100%);
+    mix-blend-mode: multiply;
+  }
+
+  #title {
+    position: fixed; z-index: 5; top: 28px; left: 32px;
+    pointer-events: none; transition: opacity 1s ease;
+  }
+  #title h1 {
+    font-size: clamp(27px, 3.1vw, 44px); line-height: 1; font-weight: 760;
+    letter-spacing: .18em;
+    background: linear-gradient(90deg, #ff70ad 0%, #fff0f8 48%, #8af7ff 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    text-shadow: 0 0 26px rgba(255, 75, 144, .4);
+  }
+  #title p { margin-top: 10px; font-size: 11px; letter-spacing: .48em; color: var(--muted); }
+  #title.faded { opacity: .48; }
+
+  #status {
+    position: fixed; z-index: 5; top: 28px; right: 32px;
+    min-height: 48px; display: flex; align-items: center; gap: 16px;
+    font-size: 14px; letter-spacing: .06em; color: rgba(255,255,255,.9);
+    background: rgba(6, 12, 24, .7); border: 1px solid rgba(134, 189, 255, .22);
+    padding: 10px 18px; border-radius: 999px;
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), 0 18px 48px rgba(0,0,0,.28);
+  }
+  #status::before {
+    content: ""; width: 14px; height: 14px; border-radius: 50%;
+    background: var(--cyan); box-shadow: 0 0 18px rgba(24, 239, 216, .9);
+  }
+  #status b { color: #8af7ff; font-weight: 680; }
+
+  #mode {
+    display: grid; gap: 10px; justify-items: center; align-content: center;
+    min-width: 260px; color: var(--ink);
+  }
+  #mode span {
+    font-size: clamp(26px, 3vw, 38px); font-weight: 760; letter-spacing: .18em;
+    color: #ffe0ee; text-shadow: 0 0 20px rgba(255, 88, 155, .55);
+    white-space: nowrap;
+  }
+  #mode::before {
+    content: "当前模式";
+    font-size: 12px; letter-spacing: .18em; color: var(--rose-2);
+  }
+  #mode::after {
+    content: ""; width: min(340px, 70vw); height: 22px;
+    background:
+      radial-gradient(circle at 50% 50%, var(--rose-2) 0 6px, transparent 7px),
+      linear-gradient(90deg, transparent 0%, rgba(255,79,150,.8) 42%, rgba(255,79,150,.8) 58%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent);
+    opacity: .86;
+  }
+
+  #legend {
+    position: fixed; z-index: 5; left: 32px; top: 132px;
+    width: 190px; padding: 18px 16px; border-radius: 22px;
+    background: var(--panel); border: 1px solid rgba(129, 180, 255, .18);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    font-size: 12px; color: rgba(246, 237, 247, .84);
+    transition: opacity .4s ease, transform .4s ease;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.025), 0 20px 60px rgba(0,0,0,.34);
+  }
+  #legend.hidden { opacity: 0; transform: translateY(12px); pointer-events: none; }
+  #legend h3 { font-size: 13px; letter-spacing: .16em; color: #fff2f8; margin-bottom: 14px; font-weight: 680; }
+  #legend .row { display: grid; grid-template-columns: 50px 1fr; gap: 12px; align-items: start; padding: 10px 0; border-top: 1px solid rgba(255,255,255,.06); }
+  #legend .row:first-of-type { border-top: 0; }
+  #legend .row .k { color: #ff9fc8; font-weight: 680; }
+  #legend .row span:last-child { color: var(--muted); line-height: 1.45; }
+  #legend .hint { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.07); font-size: 11px; line-height: 1.6; color: var(--dim); }
+
+  #telemetry {
+    position: fixed; z-index: 5; left: 32px; top: 556px;
+    width: 230px; padding: 16px; border-radius: 20px;
+    background: var(--panel); border: 1px solid rgba(129, 180, 255, .18);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.025), 0 20px 60px rgba(0,0,0,.34);
+  }
+  #telemetry h3 { font-size: 13px; letter-spacing: .12em; color: #fff2f8; margin-bottom: 12px; }
+  .meter-row { display: grid; grid-template-columns: 58px 1fr 42px; align-items: center; gap: 10px; padding: 7px 0; font-size: 11px; color: var(--muted); }
+  .meter {
+    height: 2px; border-radius: 99px; overflow: hidden;
+    background: rgba(255,255,255,.08);
+  }
+  .meter i {
+    display: block; width: var(--v, 52%); height: 100%; border-radius: inherit;
+    background: linear-gradient(90deg, var(--cyan), var(--rose));
+    box-shadow: 0 0 12px rgba(255, 79, 150, .6);
+  }
+  .meter-row b { color: rgba(255,255,255,.82); font-weight: 560; text-align: right; }
+
+  #console {
+    position: fixed; z-index: 8; left: 28px; right: 28px; bottom: 24px;
+    min-height: 156px; display: grid; grid-template-columns: minmax(280px, .92fr) minmax(300px, 1fr) minmax(400px, 1.42fr);
+    align-items: stretch; gap: 18px; padding: 22px 24px;
+    background:
+      linear-gradient(180deg, rgba(10, 18, 32, .82), rgba(4, 8, 18, .92)),
+      radial-gradient(70% 120% at 50% 0%, rgba(255, 74, 145, .14), transparent 64%);
+    border: 1px solid rgba(129, 180, 255, .2); border-radius: 30px;
+    backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 -1px 0 rgba(255, 79, 150, .24), 0 28px 80px rgba(0,0,0,.46);
+  }
+  #console::before,
+  #console::after {
+    content: ""; position: absolute; left: 26px; right: 26px; height: 1px; pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(255,79,150,.82), transparent);
+  }
+  #console::before { top: 8px; opacity: .22; }
+  #console::after { bottom: 9px; opacity: .46; }
+  .entry-actions, .mode-actions {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .entry-actions { min-width: 0; }
+  .mode-actions {
+    justify-content: end; padding: 0 2px;
+    border-radius: 18px; overflow: hidden;
+    background: rgba(3, 8, 18, .42); border: 1px solid rgba(255,255,255,.07);
+  }
+  button {
+    font: inherit; color: var(--ink); cursor: pointer;
+    min-height: 64px; border-radius: 18px; border: 1px solid rgba(255, 142, 194, .28);
+    background: rgba(10, 17, 31, .72);
+    transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
+  }
+  button:hover { transform: translateY(-1px); border-color: rgba(255, 142, 194, .62); box-shadow: 0 0 36px rgba(255, 79, 150, .18); }
+  button:focus-visible { outline: 2px solid rgba(24, 239, 216, .8); outline-offset: 3px; }
+  button:disabled { cursor: wait; opacity: .72; transform: none; }
+  #btnCam, #btnMouse {
+    flex: 1; padding: 0 18px; font-size: 17px; font-weight: 680; letter-spacing: .06em;
+  }
+  #btnCam {
+    background: linear-gradient(180deg, rgba(255,79,150,.92), rgba(122, 21, 63, .82));
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 0 36px rgba(255,79,150,.28);
+  }
+  #btnMouse {
+    color: rgba(246,237,247,.84); border-color: rgba(129,180,255,.2);
+  }
+  .mode-button {
+    flex: 1; min-width: 72px; min-height: 102px; border: 0; border-radius: 0;
+    display: grid; place-items: center; gap: 8px; padding: 12px 10px;
+    background: transparent; color: var(--muted); border-left: 1px solid rgba(255,255,255,.07);
+  }
+  .mode-button:first-child { border-left: 0; }
+  .mode-button .key { font-size: 12px; color: var(--dim); letter-spacing: .1em; }
+  .mode-button .name { font-size: 16px; font-weight: 650; letter-spacing: .08em; }
+  .mode-button.active {
+    color: #fff2f8;
+    background: linear-gradient(180deg, rgba(255,79,150,.24), rgba(255,79,150,.08));
+    box-shadow: inset 0 0 0 1px rgba(255, 142, 194, .5), 0 0 30px rgba(255,79,150,.2);
+    border-radius: 16px;
+  }
+
+  #overlay {
+    position: fixed; inset: 0; z-index: 6; pointer-events: none;
+    background:
+      radial-gradient(420px 320px at 53% 63%, rgba(255, 79, 150, .22), transparent 72%),
+      linear-gradient(180deg, rgba(0,0,0,.2), transparent 38%, rgba(0,0,0,.2));
+    transition: opacity .8s ease;
+  }
+  #overlay.gone { opacity: 0; pointer-events: none; }
+  .start-panel {
+    position: absolute; left: 50%; bottom: 210px; transform: translateX(-50%);
+    width: min(620px, calc(100vw - 64px)); text-align: center;
+  }
+  .start-panel .big {
+    font-size: clamp(34px, 6vw, 76px); line-height: 1; font-weight: 780; letter-spacing: .16em;
+    background: linear-gradient(90deg, #ff75ae, #fff1f8 48%, #8df7ff);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    text-shadow: 0 0 36px rgba(255,79,150,.44);
+  }
+  .start-panel p {
+    margin-top: 18px; font-size: 15px; line-height: 1.8; letter-spacing: .06em; color: rgba(246,237,247,.74);
+  }
+  .privacy {
+    position: fixed; z-index: 9; left: 50%; bottom: 8px; transform: translateX(-50%);
+    font-size: 11px; letter-spacing: .08em; color: rgba(246,237,247,.32);
+    pointer-events: none; white-space: nowrap;
+  }
+
+  #toast {
+    position: fixed; z-index: 30; top: 90px; left: 50%; transform: translateX(-50%) translateY(-12px);
+    background: rgba(6, 12, 24, .78); border: 1px solid rgba(255,150,220,.26); color: #ffe3f4;
+    padding: 11px 18px; border-radius: 999px; font-size: 13px; letter-spacing: .06em;
+    opacity: 0; transition: opacity .35s ease, transform .35s ease; pointer-events: none;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 960px) {
+    #title { top: 18px; left: 18px; }
+    #title h1 { font-size: 28px; }
+    #status { top: 18px; right: 18px; min-height: 38px; font-size: 12px; padding: 8px 12px; }
+    #cameraPanel { right: 12px; bottom: 324px; width: 160px; border-radius: 16px; }
+    .camera-head { top: 7px; left: 9px; right: 9px; font-size: 9px; }
+    .camera-empty { padding: 18px; font-size: 10px; }
+    #legend, #telemetry { display: none; }
+    #console {
+      left: 12px; right: 12px; bottom: 14px; min-height: 0;
+      grid-template-columns: 1fr; gap: 12px; padding: 14px; border-radius: 24px;
+    }
+    .entry-actions { order: 2; }
+    #mode { order: 1; min-width: 0; }
+    #mode span { font-size: 24px; }
+    .mode-actions { order: 3; overflow: hidden; justify-content: stretch; }
+    .mode-button { min-width: 0; min-height: 74px; padding: 10px 6px; }
+    .mode-button .name { font-size: 14px; }
+    .start-panel { bottom: 300px; }
+    .start-panel p { font-size: 13px; }
+    .privacy { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div id="bg"></div>
+  <canvas id="scene"></canvas>
+  <div id="cameraPanel">
+    <video id="cam" playsinline muted></video>
+    <canvas id="handPreview"></canvas>
+    <div class="camera-head"><span>识别预览</span><b id="cameraState">待连接</b></div>
+    <div class="camera-empty">开启摄像头后，这里会显示实时画面和手部关键点</div>
+  </div>
+  <div id="vignette"></div>
+
+  <div id="title">
+    <h1>徒手造心</h1>
+    <p>HEART · CONJURER</p>
+  </div>
+  <div id="status">准备识别 · <b>低延迟</b></div>
+
+  <div id="legend">
+    <h3>手势映射</h3>
+    <div class="row"><span class="k">食指</span><span>聚心 / 发射</span></div>
+    <div class="row"><span class="k">张掌</span><span>扩散 / 盛放</span></div>
+    <div class="row"><span class="k">双手</span><span>分裂 / 双心</span></div>
+    <div class="row"><span class="k">手枪</span><span>定向 / 箭</span></div>
+    <div class="row"><span class="k">握拳</span><span>收束 / 归聚</span></div>
+    <div class="hint">键盘：1 玫瑰 · 2 双心 · 3 箭 · 4 星河 · 5 归聚 · 空格追随 · H 隐藏</div>
+  </div>
+
+  <div id="telemetry">
+    <h3>实时数据</h3>
+    <div class="meter-row"><span>速度</span><div class="meter"><i id="mSpeed"></i></div><b id="vSpeed">0.0</b></div>
+    <div class="meter-row"><span>轨迹强度</span><div class="meter"><i id="mOrbit"></i></div><b id="vOrbit">48%</b></div>
+    <div class="meter-row"><span>粒子密度</span><div class="meter"><i id="mDensity"></i></div><b id="vDensity">62%</b></div>
+    <div class="meter-row"><span>心能量</span><div class="meter"><i id="mHeart"></i></div><b id="vHeart">0%</b></div>
+    <div class="meter-row"><span>帧率</span><div class="meter"><i id="mFps"></i></div><b id="vFps">60</b></div>
+  </div>
+
+  <div id="overlay">
+    <div class="start-panel">
+      <div class="big">徒手造心</div>
+      <p>把指尖伸进光场，群心会顺着你的轨迹聚拢、分裂、盛放。</p>
+    </div>
+  </div>
+
+  <div id="console">
+    <div class="entry-actions">
+      <button id="btnCam">开启摄像头</button>
+      <button id="btnMouse">鼠标体验</button>
+    </div>
+    <div id="mode"><span>让指尖起舞</span></div>
+    <div class="mode-actions" aria-label="模式切换">
+      <button class="mode-button" data-mode="rose"><span class="key">1</span><span class="name">玫瑰</span></button>
+      <button class="mode-button" data-mode="doubleheart"><span class="key">2</span><span class="name">双心</span></button>
+      <button class="mode-button" data-mode="arrow"><span class="key">3</span><span class="name">箭</span></button>
+      <button class="mode-button" data-mode="galaxy"><span class="key">4</span><span class="name">星河</span></button>
+      <button class="mode-button" data-mode="gather"><span class="key">5</span><span class="name">归聚</span></button>
+    </div>
+  </div>
+
+  <div class="privacy">摄像头画面仅在本机浏览器中处理，不会上传</div>
+
+  <div id="toast"></div>
+
+<script type="module">
+/* =========================================================================
+   徒手造心 · Heart Conjurer
+   - 手势识别：MediaPipe Tasks HandLandmarker (现成开源库，CDN 动态加载)
+   - 渲染：Canvas2D 预渲染发光爱心精灵 + 叠加混合 + 拖尾余晖
+   - 退路：无摄像头时自动切到鼠标 + 键盘模式
+   ========================================================================= */
+
+const TASKS_CDN = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18";
+const WASM_CDN  = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/wasm";
+const MODEL_URL = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
+
+// ---------- DOM ----------
+const canvas = document.getElementById('scene');
+const ctx = canvas.getContext('2d', { alpha: false });
+const video = document.getElementById('cam');
+const cameraPanel = document.getElementById('cameraPanel');
+const previewCanvas = document.getElementById('handPreview');
+const previewCtx = previewCanvas.getContext('2d');
+const cameraState = document.getElementById('cameraState');
+const elStatus = document.getElementById('status');
+const elMode = document.getElementById('mode').querySelector('span');
+const elTitle = document.getElementById('title');
+const elLegend = document.getElementById('legend');
+const elOverlay = document.getElementById('overlay');
+const elToast = document.getElementById('toast');
+const btnCam = document.getElementById('btnCam');
+const btnMouse = document.getElementById('btnMouse');
+const modeButtons = [...document.querySelectorAll('[data-mode]')];
+const meterEls = {
+  speed: [document.getElementById('mSpeed'), document.getElementById('vSpeed')],
+  orbit: [document.getElementById('mOrbit'), document.getElementById('vOrbit')],
+  density: [document.getElementById('mDensity'), document.getElementById('vDensity')],
+  heart: [document.getElementById('mHeart'), document.getElementById('vHeart')],
+  fps: [document.getElementById('mFps'), document.getElementById('vFps')],
+};
+
+let W = 0, H = 0, MIN = 0, MAX = 0;
+const DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+function resize() {
+  W = window.innerWidth; H = window.innerHeight; MIN = Math.min(W, H); MAX = Math.max(W, H);
+  canvas.width = Math.floor(W * DPR); canvas.height = Math.floor(H * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const rect = previewCanvas.getBoundingClientRect();
+  previewCanvas.width = Math.max(1, Math.floor(rect.width * DPR));
+  previewCanvas.height = Math.max(1, Math.floor(rect.height * DPR));
+  previewCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ---------- helpers ----------
+const TAU = Math.PI * 2;
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+const rand = (a = 1, b = 0) => b + Math.random() * (a - b);
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+function toast(msg, ms = 2600) {
+  elToast.textContent = msg; elToast.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => elToast.classList.remove('show'), ms);
+}
+function status(html) { elStatus.innerHTML = html; }
+
+// =========================================================================
+//  发光爱心精灵 —— 预渲染若干色相，渲染时只做 drawImage，性能友好
+// =========================================================================
+const PALETTE = [344, 338, 330, 324, 352, 4, 14, 190, 200, 182, 318, 306, 28, 210];
+const sprites = PALETTE.map(makeSprite);
+
+function heartPath(c, s) {
+  c.beginPath();
+  for (let t = 0; t <= TAU + 0.05; t += 0.12) {
+    const x = 16 * Math.pow(Math.sin(t), 3);
+    const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+    const px = x / 16 * s, py = -y / 16 * s;
+    t === 0 ? c.moveTo(px, py) : c.lineTo(px, py);
+  }
+  c.closePath();
+}
+function makeSprite(hue) {
+  const S = 80, cv = document.createElement('canvas');
+  cv.width = cv.height = S; const c = cv.getContext('2d');
+  // soft glow halo
+  const g = c.createRadialGradient(S/2, S/2, 0, S/2, S/2, S/2);
+  g.addColorStop(0.0, `hsla(${hue},100%,72%,0.82)`);
+  g.addColorStop(0.25, `hsla(${hue},100%,62%,0.28)`);
+  g.addColorStop(0.6, `hsla(${hue},95%,55%,0.07)`);
+  g.addColorStop(1.0, `hsla(${hue},95%,55%,0)`);
+  c.fillStyle = g; c.fillRect(0, 0, S, S);
+  // bright heart core
+  c.save(); c.translate(S/2, S/2 + 1);
+  c.shadowColor = `hsla(${hue},100%,80%,0.9)`; c.shadowBlur = 10;
+  c.fillStyle = `hsla(${hue},100%,90%,0.95)`;
+  heartPath(c, S * 0.24); c.fill();
+  c.shadowBlur = 0; c.fillStyle = `hsla(${hue},100%,98%,0.85)`;
+  heartPath(c, S * 0.13); c.fill();
+  c.restore();
+  return cv;
+}
+function glowSprite(hue) {
+  const key = 'g' + hue;
+  if (glowSprite[key]) return glowSprite[key];
+  const S = 256, cv = document.createElement('canvas');
+  cv.width = cv.height = S; const c = cv.getContext('2d');
+  const g = c.createRadialGradient(S/2, S/2, 0, S/2, S/2, S/2);
+  g.addColorStop(0, `hsla(${hue},100%,66%,0.5)`);
+  g.addColorStop(0.4, `hsla(${hue},100%,60%,0.16)`);
+  g.addColorStop(1, `hsla(${hue},100%,60%,0)`);
+  c.fillStyle = g; c.fillRect(0, 0, S, S);
+  return glowSprite[key] = cv;
+}
+
+// =========================================================================
+//  阵型基底坐标（单位空间，约 [-1,1]）—— 只算一次，渲染时旋转/缩放/平移
+// =========================================================================
+const COUNT = window.innerWidth < 760 ? 480 : 860;
+
+function heartXY(t) { // 单位心形，y 向上为正再翻转到画布
+  const x = 16 * Math.pow(Math.sin(t), 3);
+  const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+  return [x / 16, -y / 16];
+}
+function buildHeart(n) {
+  const out = [];
+  for (let i = 0; i < n; i++) out.push(heartXY(i / n * TAU));
+  return out;
+}
+function buildFilledHeart(n) {
+  const out = [];
+  let seed = 0;
+  while (out.length < n) {
+    const u = (seed * 0.754877666) % 1;
+    const v = (seed * 0.569840296) % 1;
+    const x = u * 2.55 - 1.275;
+    const y = v * 2.35 - 1.08;
+    const q = x*x + y*y - 1;
+    if (q*q*q - x*x*y*y*y <= 0) out.push([x * 0.78, -y * 0.78]);
+    seed++;
+  }
+  return out;
+}
+function buildDoubleHeart(n) {
+  const out = []; const half = n >> 1;
+  for (let i = 0; i < n; i++) {
+    const [hx, hy] = heartXY(((i >> 1) / half) * TAU);
+    const left = (i & 1) === 0;
+    const s = 0.78, off = 0.42, tilt = left ? 0.12 : -0.12;
+    const rx = hx * Math.cos(tilt) - hy * Math.sin(tilt);
+    const ry = hx * Math.sin(tilt) + hy * Math.cos(tilt);
+    out.push([rx * s + (left ? -off : off), ry * s - 0.05]);
+  }
+  return out;
+}
+function buildRose(n) {
+  const out = []; const petals = Math.floor(n * 0.86);
+  for (let i = 0; i < n; i++) {
+    if (i < petals) {
+      const f = i / petals, th = f * Math.PI;          // k=5 玫瑰，[0,π] 描一遍 5 瓣
+      const env = Math.cos(5 * th);
+      const layer = 0.42 + 0.58 * ((i * 0.61803) % 1); // 伪随机径向填充花瓣
+      const r = env * layer;
+      out.push([r * Math.cos(th), r * Math.sin(th)]);
+    } else {                                            // 花心螺旋
+      const g = (i - petals) / (n - petals);
+      const a = g * Math.PI * 7, rr = 0.16 * g;
+      out.push([rr * Math.cos(a), rr * Math.sin(a)]);
+    }
+  }
+  return out;
+}
+function sampleSegments(segs, n) {
+  let total = 0; const L = segs.map(s => { const d = Math.hypot(s[2]-s[0], s[3]-s[1]); total += d; return d; });
+  const out = [];
+  for (let s = 0; s < segs.length; s++) {
+    const cnt = Math.max(2, Math.round(n * L[s] / total));
+    for (let k = 0; k < cnt; k++) {
+      const t = k / cnt;
+      out.push([lerp(segs[s][0], segs[s][2], t), lerp(segs[s][1], segs[s][3], t)]);
+    }
+  }
+  while (out.length < n) out.push(out[out.length % out.length || 0]);
+  return out.slice(0, n);
+}
+function buildArrow(n) {
+  const heartN = Math.floor(n * 0.52);
+  const heart = [];
+  for (let i = 0; i < heartN; i++) { const [x, y] = heartXY(i / heartN * TAU); heart.push([x * 0.82, y * 0.82 - 0.04]); }
+  // 箭：从左下到右上贯穿
+  const tx = 1.25, ty = -0.62, ax = -1.25, ay = 0.62;
+  const dx = tx - ax, dy = ty - ay, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
+  const px = -uy, py = ux; // 垂直
+  const hb = 0.26, hw = 0.14;             // 箭头
+  const fb = 0.22, fw = 0.13;             // 箭羽
+  const segs = [
+    [ax, ay, tx, ty],                                                   // 箭杆
+    [tx, ty, tx - ux*hb + px*hw, ty - uy*hb + py*hw],                   // 箭头上
+    [tx, ty, tx - ux*hb - px*hw, ty - uy*hb - py*hw],                   // 箭头下
+    [ax, ay, ax + ux*fb + px*fw, ay + uy*fb + py*fw],                   // 箭羽上
+    [ax, ay, ax + ux*fb - px*fw, ay + uy*fb - py*fw],                   // 箭羽下
+    [ax+ux*0.16, ay+uy*0.16, ax+ux*(fb+0.16)+px*fw, ay+uy*(fb+0.16)+py*fw],
+    [ax+ux*0.16, ay+uy*0.16, ax+ux*(fb+0.16)-px*fw, ay+uy*(fb+0.16)-py*fw],
+  ];
+  const arrow = sampleSegments(segs, n - heartN);
+  return heart.concat(arrow);
+}
+function buildGalaxy(n) {
+  const out = []; const arms = 4; const armN = Math.floor(n * 0.66); const per = Math.floor(armN / arms);
+  for (let i = 0; i < n; i++) {
+    if (i < armN) {
+      const a = i % arms, idx = Math.floor(i / arms), f = idx / per;
+      let th = f * TAU * 2.4;
+      let r = 0.1 * Math.exp(0.26 * th); if (r > 1.3) r = 1.3;
+      r += rand(0.07, -0.07); th += rand(0.16, -0.16);
+      const ang = th + a * (TAU / arms);
+      out.push([r * Math.cos(ang), r * Math.sin(ang)]);
+    } else {
+      const rr = Math.sqrt(Math.random()) * 1.35, ang = rand(TAU);
+      out.push([rr * Math.cos(ang), rr * Math.sin(ang)]);
+    }
+  }
+  return out;
+}
+const SHAPES = {
+  heart: buildHeart(COUNT),
+  heartfield: buildFilledHeart(COUNT),
+  doubleheart: buildDoubleHeart(COUNT),
+  rose: buildRose(COUNT),
+  arrow: buildArrow(COUNT),
+  galaxy: buildGalaxy(COUNT),
+};
+
+// =========================================================================
+//  粒子
+// =========================================================================
+const ps = [];
+for (let i = 0; i < COUNT; i++) {
+  ps.push({
+    x: rand(W), y: rand(H), vx: 0, vy: 0,
+    hi: i % sprites.length,
+    jx: rand(0.03, -0.03), jy: rand(0.03, -0.03),
+    tw: rand(TAU), follow: rand(1, 0.35), orbA: rand(TAU), orbR: rand(72, 18),
+    size: rand(17, 6), alpha: rand(0.78, 0.36),
+    field: i > COUNT * 0.66, // 星河里的散点更爱闪
+  });
+}
+
+// =========================================================================
+//  手势识别（MediaPipe）+ 鼠标退路
+// =========================================================================
+let visionMod = null, landmarker = null, stream = null, handMode = false;
+let hands = [];                 // 每帧解析后的手
+let lastTs = 0;
+let previewStatus = '待连接';
+const mouse = { x: W/2, y: H/2, lastMove: -1e9 };
+
+function toCanvas(pt) { return { x: (1 - pt.x) * W, y: pt.y * H }; } // 镜像 x
+function toStage(pt) {
+  const x = clamp(((1 - pt.x) - 0.08) / 0.84, 0, 1);
+  const y = clamp((pt.y - 0.12) / 0.76, 0, 1);
+  return {
+    x: lerp(W * 0.28, W * 0.68, x),
+    y: lerp(H * 0.24, H * 0.54, y),
+  };
+}
+function fingersOf(lm) {
+  const d = (a, b) => Math.hypot(lm[a].x - lm[b].x, lm[a].y - lm[b].y);
+  const ext = [];
+  ext[0] = d(4, 17) > d(3, 17) * 1.05;                               // 拇指：远离小指根
+  const pip = [[8,6],[12,10],[16,14],[20,18]];
+  for (let k = 0; k < 4; k++) ext[k+1] = d(pip[k][0], 0) > d(pip[k][1], 0) * 1.03;
+  return ext;
+}
+function classifyHand(lm) {
+  const e = fingersOf(lm); const idx = e[1], mid = e[2], ring = e[3], pky = e[4], th = e[0];
+  if (!idx && !mid && !ring && !pky) return 'gather';                // 握拳
+  if (th && idx && !mid && !ring && !pky) return 'arrow';            // 手枪
+  if (idx && !mid && !ring && !pky) return 'chase';                  // 食指
+  if (((idx?1:0)+(mid?1:0)+(ring?1:0)+(pky?1:0)) >= 3) return 'rose'; // 张掌
+  return 'chase';
+}
+function sceneGesture() {
+  if (hands.length >= 2) {
+    const dd = dist(hands[0].wrist, hands[1].wrist);
+    const ps2 = (hands[0].palmSize + hands[1].palmSize) / 2;
+    return dd < ps2 * 3.4 ? 'doubleheart' : 'galaxy';
+  }
+  if (hands.length === 1) return classifyHand(hands[0].lm);
+  return null;
+}
+function parseHands(res) {
+  hands = [];
+  if (!res || !res.landmarks) return;
+  for (const lm of res.landmarks) {
+    const pts = lm.map(toCanvas);
+    const stagePts = lm.map(toStage);
+    const palm = { x: (pts[0].x+pts[5].x+pts[9].x+pts[13].x+pts[17].x)/5,
+                   y: (pts[0].y+pts[5].y+pts[9].y+pts[13].y+pts[17].y)/5 };
+    const stagePalm = { x: (stagePts[0].x+stagePts[5].x+stagePts[9].x+stagePts[13].x+stagePts[17].x)/5,
+                        y: (stagePts[0].y+stagePts[5].y+stagePts[9].y+stagePts[13].y+stagePts[17].y)/5 };
+    hands.push({
+      lm, pts, palm, wrist: pts[0], indexTip: pts[8],
+      stagePts, stagePalm, stageIndexTip: stagePts[8],
+      palmSize: Math.hypot(pts[0].x-pts[9].x, pts[0].y-pts[9].y),
+      dir: Math.atan2(pts[8].y - pts[0].y, pts[8].x - pts[0].x),
+      stageDir: Math.atan2(stagePts[8].y - stagePts[0].y, stagePts[8].x - stagePts[0].x),
+    });
+  }
+}
+
+function renderHandPreview() {
+  const w = previewCanvas.clientWidth, h = previewCanvas.clientHeight;
+  previewCtx.clearRect(0, 0, w, h);
+  if (!cameraPanel.classList.contains('connected')) {
+    cameraState.textContent = previewStatus;
+    return;
+  }
+  cameraState.textContent = handMode && landmarker ? (hands.length ? '识别中' : '寻找手') : previewStatus;
+  if (!hands.length) return;
+
+  previewCtx.save();
+  previewCtx.lineWidth = 3;
+  previewCtx.lineCap = 'round';
+  previewCtx.lineJoin = 'round';
+  previewCtx.shadowColor = 'rgba(0, 255, 64, .7)';
+  previewCtx.shadowBlur = 7;
+  previewCtx.strokeStyle = '#00ff24';
+  for (const hand of hands) {
+    const pts = hand.lm.map(pt => ({ x: (1 - pt.x) * w, y: pt.y * h }));
+    previewCtx.beginPath();
+    for (const [a, b] of HC) {
+      previewCtx.moveTo(pts[a].x, pts[a].y);
+      previewCtx.lineTo(pts[b].x, pts[b].y);
+    }
+    previewCtx.stroke();
+    previewCtx.shadowBlur = 5;
+    previewCtx.fillStyle = '#ff1a1a';
+    for (const pt of pts) {
+      previewCtx.beginPath();
+      previewCtx.arc(pt.x, pt.y, 4.5, 0, TAU);
+      previewCtx.fill();
+    }
+  }
+  previewCtx.restore();
+}
+
+function withTimeout(promise, ms, message) {
+  let timer = 0;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+async function startCamera() {
+  if (stream && landmarker) {
+    status('本机识别中 · <b>低延迟</b>');
+    toast('摄像头已连接');
+    return;
+  }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    status('需要 localhost / https · <b>鼠标模式</b>');
+    toast('请通过 http://localhost 或 https 打开后再开启摄像头');
+    return;
+  }
+  btnCam.disabled = true;
+  btnCam.textContent = '请求权限中';
+  previewStatus = '请求权限';
+  cameraState.textContent = previewStatus;
+  try {
+    status('请求摄像头权限 · <b>本机处理</b>');
+    stream = await withTimeout(navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false,
+    }), 15000, '摄像头授权超时');
+    video.srcObject = stream;
+    await video.play();
+    cameraPanel.classList.add('connected');
+    previewStatus = '加载中';
+    cameraState.textContent = previewStatus;
+
+    btnCam.textContent = '加载手势模型';
+    status('摄像头已开启 · <b>加载手势</b>');
+    if (!visionMod) visionMod = await withTimeout(import(TASKS_CDN), 15000, '手势库加载超时');
+    const vision = await withTimeout(visionMod.FilesetResolver.forVisionTasks(WASM_CDN), 15000, '手势运行库加载超时');
+    landmarker = await withTimeout(visionMod.HandLandmarker.createFromOptions(vision, {
+      baseOptions: { modelAssetPath: MODEL_URL, delegate: 'GPU' },
+      runningMode: 'VIDEO', numHands: 2,
+      minHandDetectionConfidence: 0.5, minHandPresenceConfidence: 0.5, minTrackingConfidence: 0.5,
+    }), 20000, '手势模型加载超时');
+    handMode = true;
+    status('本机识别中 · <b>低延迟</b>');
+    previewStatus = '识别中';
+    cameraState.textContent = previewStatus;
+    btnCam.textContent = '摄像头已连接';
+    toast('摄像头已开启，举起手开始控制');
+  } catch (e) {
+    console.warn('camera/mediapipe unavailable:', e);
+    if (stream) stream.getTracks().forEach(track => track.stop());
+    stream = null;
+    video.srcObject = null;
+    cameraPanel.classList.remove('connected');
+    previewCtx.clearRect(0, 0, previewCanvas.clientWidth, previewCanvas.clientHeight);
+    previewStatus = '未连接';
+    cameraState.textContent = previewStatus;
+    btnCam.textContent = '开启摄像头';
+    const denied = e && (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError');
+    const missing = e && (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError');
+    const reason = denied ? '权限被拒绝' : missing ? '无可用摄像头' : e.message && e.message.includes('超时') ? e.message : '启动失败';
+    handMode = false;
+    status(`鼠标模式 · <b>${reason}</b>`);
+    toast(`${reason}，已切换鼠标模式`);
+  } finally {
+    btnCam.disabled = false;
+  }
+}
+
+// =========================================================================
+//  模式判定（含去抖 + 键盘锁定）
+// =========================================================================
+let mode = 'idle', prevMode = 'idle', modeEnterTime = 0;
+let committedG = null, pendG = null, pendCount = 0, nullCount = 0;
+let forcedMode = null, forcedUntil = 0;
+const MODE_LABEL = {
+  chase: '群心逐指尖', rose: '绽放玫瑰', doubleheart: '交叠双心',
+  arrow: '丘比特之箭', galaxy: '漫天星河', gather: '万心归聚', idle: '让指尖起舞',
+};
+function forceMode(m) { forcedMode = m; forcedUntil = performance.now() + 14000; toast(MODE_LABEL[m] + ' （手动）'); }
+function decideMode() {
+  const now = performance.now();
+  if (forcedMode && now < forcedUntil) return forcedMode;
+  forcedMode = null;
+  const g = sceneGesture();
+  if (g === null) { if (++nullCount > 8) committedG = null; }
+  else {
+    nullCount = 0;
+    if (g === pendG) { if (++pendCount >= 4) committedG = g; } else { pendG = g; pendCount = 0; }
+  }
+  if (committedG) return committedG;
+  const mouseActive = now - mouse.lastMove < 6500 && mouse.y < H - (W < 960 ? 320 : 220);
+  return mouseActive ? 'chase' : 'idle';
+}
+
+// =========================================================================
+//  心跳 lub-dub
+// =========================================================================
+function heartbeat(t) {
+  const ph = (t % 0.92) / 0.92;
+  const g = (c, w) => Math.exp(-((ph - c) * (ph - c)) / (w * w));
+  return Math.min(1, g(0.08, 0.05) + 0.62 * g(0.26, 0.055));
+}
+
+function chaseAttractor(pt) {
+  return {
+    x: clamp(pt.x, W * 0.28, W * 0.68),
+    y: clamp(pt.y - MIN * 0.08, H * 0.22, H * 0.52),
+  };
+}
+
+const pointerField = { x: W/2, y: H/2, speed: 0, trail: [] };
+function setMeter(key, pct, label) {
+  const pair = meterEls[key];
+  if (!pair || !pair[0] || !pair[1]) return;
+  pair[0].style.setProperty('--v', clamp(pct, 0, 100).toFixed(0) + '%');
+  pair[1].textContent = label;
+}
+function syncControlSurface(dt, beat, pointers) {
+  modeButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
+  const pt = pointers[0];
+  if (pt) {
+    const speed = Math.hypot(pt.x - pointerField.x, pt.y - pointerField.y) / Math.max(dt, 0.016);
+    pointerField.speed = lerp(pointerField.speed, speed, 0.22);
+    pointerField.x = pt.x; pointerField.y = pt.y;
+    pointerField.trail.unshift({ x: pt.x, y: pt.y, a: 1 });
+    pointerField.trail = pointerField.trail.slice(0, 30).map((p, i) => ({ ...p, a: 1 - i / 30 }));
+  } else {
+    pointerField.speed *= 0.9;
+    pointerField.trail = pointerField.trail.slice(0, 24).map((p, i) => ({ ...p, a: Math.max(0, p.a - 0.035 - i * 0.002) })).filter(p => p.a > 0.02);
+  }
+  const speedPct = clamp(pointerField.speed / 12, 0, 100);
+  const orbit = mode === 'chase' ? 78 : mode === 'idle' ? 36 : 64 + beat * 20;
+  const density = mode === 'galaxy' ? 92 : mode === 'gather' ? 68 : 62 + beat * 18;
+  const fps = clamp(Math.round(1 / Math.max(dt, 0.016)), 1, 60);
+  setMeter('speed', speedPct, (pointerField.speed / 100).toFixed(1));
+  setMeter('orbit', orbit, Math.round(orbit) + '%');
+  setMeter('density', density, Math.round(density) + '%');
+  setMeter('heart', beat * 100, Math.round(beat * 100) + '%');
+  setMeter('fps', fps / 60 * 100, String(fps));
+}
+
+// =========================================================================
+//  主循环
+// =========================================================================
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  const t = now / 1000; const f = Math.min(2.4, dt * 60 || 1);
+  const beat = heartbeat(t);
+
+  // —— 手势检测 ——
+  if (handMode && landmarker && video.readyState >= 2) {
+    const ts = Math.max(now, lastTs + 1); lastTs = ts;
+    try { parseHands(landmarker.detectForVideo(video, ts)); } catch (_) {}
+  }
+  renderHandPreview();
+
+  // —— 决定模式 + 中心/缩放/角度 ——
+  mode = decideMode();
+  if (mode !== prevMode) { modeEnterTime = now; prevMode = mode; elMode.textContent = MODE_LABEL[mode]; }
+  const bloom = (() => { const e = clamp((now - modeEnterTime) / 900, 0, 1); return 1 - Math.pow(1 - e, 3); })();
+
+  const center = { x: W * 0.48, y: H * (W < 960 ? 0.38 : 0.42) }; let scale = MIN * 0.24, angle = 0;
+  const h0 = hands[0], mouseActive = now - mouse.lastMove < 6500 && mouse.y < H - (W < 960 ? 320 : 220);
+  const handCenter = h0 ? h0.stagePalm : (mouseActive ? mouse : center);
+  if (mode === 'rose')        { Object.assign(center, handCenter); scale = MIN * 0.18 * (0.25 + 0.75*bloom); angle = t * 0.12; }
+  else if (mode === 'arrow')  { Object.assign(center, handCenter); scale = MIN * 0.19; angle = h0 ? h0.stageDir : -0.5; }
+  else if (mode === 'gather') { Object.assign(center, handCenter); scale = MIN * 0.1 * (0.6 + 0.4*beat); }
+  else if (mode === 'doubleheart') {
+    if (hands.length >= 2) { center.x = (hands[0].stagePalm.x+hands[1].stagePalm.x)/2; center.y = (hands[0].stagePalm.y+hands[1].stagePalm.y)/2; }
+    else Object.assign(center, mouseActive ? mouse : center);
+    scale = MIN * 0.19 * (0.4 + 0.6*bloom);
+  }
+  else if (mode === 'galaxy') { scale = MIN * 0.34 * (0.5 + 0.5*bloom); angle = t * 0.05; }
+  else if (mode === 'idle')   { scale = MIN * 0.27 * (0.94 + 0.06*beat); angle = Math.sin(t * 0.18) * 0.08; }
+
+  // 追随用的指尖（可多个）
+  const pointers = hands.length ? hands.map(h => h.stageIndexTip) : (mouseActive ? [mouse] : []);
+  syncControlSurface(dt, beat, pointers);
+
+  // —— 更新粒子 ——
+  const shape = mode === 'idle' ? SHAPES.heartfield : SHAPES[mode];
+  const ca = Math.cos(angle), sa = Math.sin(angle);
+  for (let i = 0; i < COUNT; i++) {
+    const p = ps[i];
+    if (shape) {                                   // 阵型：弹向目标点
+      const b = shape[i]; const bx = b[0] + p.jx, by = b[1] + p.jy;
+      const rx = bx * ca - by * sa, ry = bx * sa + by * ca;
+      const txp = center.x + rx * scale, typ = center.y + ry * scale;
+      const k = mode === 'galaxy' ? 0.04 : 0.075;
+      p.vx += (txp - p.x) * k; p.vy += (typ - p.y) * k;
+      p.vx *= 0.82; p.vy *= 0.82;
+    } else if (pointers.length) {                  // 追随指尖：心场被指尖牵引
+      let best = pointers[0], bd = 1e18;
+      for (const pt of pointers) { const d = (pt.x-p.x)**2 + (pt.y-p.y)**2; if (d < bd) { bd = d; best = pt; } }
+      if (mode === 'chase' && i < COUNT * 0.68) {
+        const b = SHAPES.heartfield[i];
+        const attractor = chaseAttractor(best);
+        const txp = attractor.x + b[0] * MIN * 0.19;
+        const typ = attractor.y + b[1] * MIN * 0.19;
+        const k = 0.04 + p.follow * 0.025;
+        p.vx += (txp - p.x) * k; p.vy += (typ - p.y) * k;
+        p.vx *= 0.86; p.vy *= 0.86;
+      } else {
+        p.orbA += 0.04 + p.follow * 0.05;
+        const pr = p.orbR * (0.55 + 0.45 * Math.sin(t * 1.6 + p.tw));
+        const txp = best.x + Math.cos(p.orbA) * pr, typ = best.y + Math.sin(p.orbA) * pr;
+        const k = 0.02 + p.follow * 0.06;
+        p.vx += (txp - p.x) * k; p.vy += (typ - p.y) * k;
+        p.vx += -(typ - p.y) * 0.0016; p.vy += (txp - p.x) * 0.0016; // 涡旋
+        p.vx *= 0.9; p.vy *= 0.9;
+      }
+    } else {                                        // 待机：余烬般上升
+      p.vy -= 0.03; p.vx += Math.sin(t * 0.6 + p.tw) * 0.02;
+      p.vx *= 0.985; p.vy *= 0.985;
+    }
+    p.x += p.vx * f; p.y += p.vy * f;
+    if (!shape && !pointers.length) {               // 待机环绕
+      if (p.y < -30) { p.y = H + 30; p.x = rand(W); }
+      if (p.x < -30) p.x = W + 30; else if (p.x > W + 30) p.x = -30;
+    }
+  }
+
+  render(t, beat, center, pointers, scale);
+  requestAnimationFrame(frame);
+}
+
+// =========================================================================
+//  渲染
+// =========================================================================
+const hueShiftRate = 0.7;
+const HC = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],
+            [9,13],[13,14],[14,15],[15,16],[13,17],[0,17],[17,18],[18,19],[19,20]];
+
+function renderHeartAura(t, beat, center, scale) {
+  ctx.save();
+  ctx.translate(center.x, center.y);
+  ctx.rotate(Math.sin(t * 0.18) * 0.04);
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.shadowColor = 'rgba(255, 76, 144, .72)';
+  ctx.shadowBlur = 22;
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = `rgba(255, 154, 202, ${0.18 + beat * 0.12})`;
+  heartPath(ctx, scale * (1.02 + beat * 0.025));
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(24, 239, 216, .12)';
+  heartPath(ctx, scale * 1.08);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function renderEnergyRibbons(t, beat, center, scale) {
+  ctx.save();
+  ctx.translate(center.x, center.y);
+  ctx.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 7; i++) {
+    const r = scale * (0.72 + i * 0.12);
+    const start = t * (0.12 + i * 0.01) + i * 0.72;
+    const span = Math.PI * (0.75 + 0.18 * Math.sin(t * 0.4 + i));
+    ctx.save();
+    ctx.rotate(-0.28 + i * 0.105 + Math.sin(t * 0.15 + i) * 0.04);
+    ctx.scale(1.48 + i * 0.035, 0.34 + i * 0.018);
+    ctx.beginPath();
+    ctx.arc(0, 0, r, start, start + span);
+    ctx.strokeStyle = i % 3 === 1 ? 'rgba(24, 239, 216, .18)' : `rgba(255, 77, 146, ${0.18 - i * 0.012 + beat * 0.04})`;
+    ctx.lineWidth = i % 2 ? 1.2 : 1.8;
+    ctx.shadowColor = i % 3 === 1 ? 'rgba(24, 239, 216, .45)' : 'rgba(255, 77, 146, .55)';
+    ctx.shadowBlur = 12;
+    ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+function renderPointerField(t, beat, center, pointers) {
+  if (!pointers.length && pointerField.trail.length < 2) return;
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  if (pointerField.trail.length > 1) {
+    ctx.beginPath();
+    pointerField.trail.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+    ctx.strokeStyle = 'rgba(24,239,216,0.34)';
+    ctx.lineWidth = 2.2;
+    ctx.shadowColor = 'rgba(24,239,216,.65)';
+    ctx.shadowBlur = 14;
+    ctx.stroke();
+  }
+  for (const pt of pointers) {
+    const attractor = mode === 'chase' ? chaseAttractor(pt) : center;
+    const pulse = 1 + beat * 0.28 + Math.sin(t * 5) * 0.04;
+    ctx.shadowColor = 'rgba(255,79,150,.85)';
+    ctx.shadowBlur = 22;
+    ctx.strokeStyle = 'rgba(255,234,246,.82)';
+    ctx.lineWidth = 1.2;
+    for (const r of [18, 32, 50]) {
+      ctx.globalAlpha = r === 18 ? .88 : .34;
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, r * pulse, 0, TAU);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = .32;
+    ctx.strokeStyle = 'rgba(24,239,216,.62)';
+    ctx.beginPath();
+    ctx.moveTo(pt.x, pt.y);
+    ctx.quadraticCurveTo((pt.x + attractor.x) / 2, pt.y - MIN * .08, attractor.x, attractor.y);
+    ctx.stroke();
+    ctx.globalAlpha = .9;
+    ctx.fillStyle = 'rgba(255,245,250,.92)';
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, 4.4 + beat * 2.2, 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function render(t, beat, center, pointers, scale) {
+  const visualCenter = mode === 'chase' && pointers[0] ? chaseAttractor(pointers[0]) : center;
+  const visualScale = mode === 'chase' ? MIN * 0.19 : scale;
+  // 拖尾：半透明覆盖而非清屏
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = 'rgba(7,3,15,0.12)';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.globalCompositeOperation = 'lighter';
+
+  // 柔光底：心跳光晕
+  const haloHue = 330 + 24 * Math.sin(t * 0.2);
+  const hg = glowSprite(Math.round(haloHue));
+  const R = MIN * (0.23 + 0.1 * beat);
+  ctx.globalAlpha = 0.26 + 0.22 * beat;
+  ctx.drawImage(hg, visualCenter.x - R, visualCenter.y - R, R*2, R*2);
+  if (mode === 'chase' || mode === 'idle' || mode === 'galaxy') renderEnergyRibbons(t, beat, visualCenter, visualScale);
+  if (mode === 'chase' || mode === 'idle') renderHeartAura(t, beat, visualCenter, visualScale);
+
+  // 指尖柔光
+  ctx.globalAlpha = 0.42;
+  const pg = glowSprite(322);
+  for (const pt of pointers) { const r = 54; ctx.drawImage(pg, pt.x - r, pt.y - r, r*2, r*2); }
+  renderPointerField(t, beat, center, pointers);
+
+  // 霓虹手骨架
+  if (hands.length) {
+    ctx.globalAlpha = 0.55; ctx.lineWidth = 2; ctx.lineCap = 'round';
+    ctx.strokeStyle = `hsla(${Math.round(316 + 20*Math.sin(t))},100%,76%,0.5)`;
+    ctx.shadowColor = 'rgba(255,120,200,0.8)'; ctx.shadowBlur = 8;
+    for (const h of hands) {
+      ctx.beginPath();
+      const pts = h.stagePts;
+      for (const [a, b] of HC) { ctx.moveTo(pts[a].x, pts[a].y); ctx.lineTo(pts[b].x, pts[b].y); }
+      ctx.stroke();
+      for (const pt of pts) { ctx.beginPath(); ctx.arc(pt.x, pt.y, 2.1, 0, TAU); ctx.fillStyle = 'rgba(255,220,245,0.85)'; ctx.fill(); }
+    }
+    ctx.shadowBlur = 0;
+  }
+
+  // 群心
+  const shift = Math.floor(t * hueShiftRate);
+  const sizeMul = 1 + 0.16 * beat;
+  const twinkle = (mode === 'galaxy' || mode === 'idle');
+  for (let i = 0; i < COUNT; i++) {
+    const p = ps[i];
+    const sp = sprites[(p.hi + shift) % sprites.length];
+    let a = p.alpha;
+    if (twinkle && p.field) a *= 0.4 + 0.6 * Math.abs(Math.sin(t * 2.2 + p.tw));
+    const s = p.size * sizeMul;
+    ctx.globalAlpha = a;
+    ctx.drawImage(sp, p.x - s/2, p.y - s/2, s, s);
+  }
+
+  ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+}
+
+// =========================================================================
+//  交互
+// =========================================================================
+window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.lastMove = performance.now(); });
+window.addEventListener('touchmove', e => {
+  if (e.touches[0]) { mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; mouse.lastMove = performance.now(); }
+}, { passive: true });
+
+let audio = null, audioOn = false, lastBeatLevel = 0;
+function ensureAudio() { if (!audio) { try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) {} } }
+function thump() {
+  if (!audioOn || !audio) return;
+  const o = audio.createOscillator(), g = audio.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(72, audio.currentTime);
+  o.frequency.exponentialRampToValueAtTime(40, audio.currentTime + 0.18);
+  g.gain.setValueAtTime(0.0001, audio.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.22, audio.currentTime + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + 0.22);
+  o.connect(g); g.connect(audio.destination); o.start(); o.stop(audio.currentTime + 0.24);
+}
+// 心跳触发音效
+setInterval(() => {
+  const lvl = heartbeat(performance.now() / 1000);
+  if (lvl > 0.6 && lastBeatLevel <= 0.6) thump();
+  lastBeatLevel = lvl;
+}, 16);
+
+window.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (k === '1') forceMode('rose');
+  else if (k === '2') forceMode('doubleheart');
+  else if (k === '3') forceMode('arrow');
+  else if (k === '4') forceMode('galaxy');
+  else if (k === '5') forceMode('gather');
+  else if (k === ' ') { forcedMode = null; forcedUntil = 0; committedG = null; toast('群心逐指尖'); e.preventDefault(); }
+  else if (k === 'h') elLegend.classList.toggle('hidden');
+  else if (k === 'v') cameraPanel.classList.toggle('hidden');
+  else if (k === 'm') { ensureAudio(); audioOn = !audioOn; if (audioOn && audio.state === 'suspended') audio.resume(); toast(audioOn ? '心跳音 · 开' : '心跳音 · 关'); }
+});
+modeButtons.forEach(btn => btn.addEventListener('click', () => {
+  enter();
+  mouse.lastMove = -1e9;
+  forceMode(btn.dataset.mode);
+}));
+
+function enter() {
+  elOverlay.classList.add('gone');
+  setTimeout(() => elTitle.classList.add('faded'), 5000);
+  ensureAudio(); if (audio && audio.state === 'suspended') audio.resume();
+}
+btnCam.addEventListener('click', () => { enter(); startCamera(); });
+btnMouse.addEventListener('click', () => {
+  enter(); handMode = false; status('鼠标模式 · <b>低延迟</b>');
+  toast('移动鼠标画出群心，按 1-5 变阵');
+});
+
+// 启动渲染（即使未点开始也先把背景星河点亮）
+requestAnimationFrame(frame);
+status('准备识别 · <b>低延迟</b>');
+</script>
+</body>
+</html>
