@@ -54,7 +54,7 @@
       linear-gradient(180deg, transparent 0 68%, rgba(0, 0, 0, .42) 100%);
   }
 
-  #scene { position: fixed; inset: 0; z-index: 1; display: block; }
+  #scene { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 1; display: block; }
 
   #cameraPanel {
     position: fixed; z-index: 7; right: 32px; bottom: 196px;
@@ -626,12 +626,16 @@ let previewStatus = '待连接';
 const mouse = { x: W/2, y: H/2, lastMove: -1e9 };
 
 function toCanvas(pt) { return { x: (1 - pt.x) * W, y: pt.y * H }; } // 镜像 x
+function stageFocus() {
+  return { x: W * 0.5, y: H * (W < 960 ? 0.38 : 0.42) };
+}
 function toStage(pt) {
-  const x = clamp(((1 - pt.x) - 0.08) / 0.84, 0, 1);
-  const y = clamp((pt.y - 0.12) / 0.76, 0, 1);
+  const focus = stageFocus();
+  const x = clamp(((1 - pt.x) - 0.5) / 0.42, -1, 1);
+  const y = clamp((pt.y - 0.5) / 0.38, -1, 1);
   return {
-    x: lerp(W * 0.28, W * 0.68, x),
-    y: lerp(H * 0.24, H * 0.54, y),
+    x: focus.x + x * MIN * 0.08,
+    y: focus.y + y * MIN * 0.055,
   };
 }
 function fingersOf(lm) {
@@ -665,13 +669,9 @@ function parseHands(res) {
   for (const lm of res.landmarks) {
     const pts = lm.map(toCanvas);
     const stagePts = lm.map(toStage);
-    const palm = { x: (pts[0].x+pts[5].x+pts[9].x+pts[13].x+pts[17].x)/5,
-                   y: (pts[0].y+pts[5].y+pts[9].y+pts[13].y+pts[17].y)/5 };
-    const stagePalm = { x: (stagePts[0].x+stagePts[5].x+stagePts[9].x+stagePts[13].x+stagePts[17].x)/5,
-                        y: (stagePts[0].y+stagePts[5].y+stagePts[9].y+stagePts[13].y+stagePts[17].y)/5 };
     hands.push({
-      lm, pts, palm, wrist: pts[0], indexTip: pts[8],
-      stagePts, stagePalm, stageIndexTip: stagePts[8],
+      lm, pts, wrist: pts[0], indexTip: pts[8],
+      stagePts, stageIndexTip: stagePts[8],
       palmSize: Math.hypot(pts[0].x-pts[9].x, pts[0].y-pts[9].y),
       dir: Math.atan2(pts[8].y - pts[0].y, pts[8].x - pts[0].x),
       stageDir: Math.atan2(stagePts[8].y - stagePts[0].y, stagePts[8].x - stagePts[0].x),
@@ -821,9 +821,10 @@ function heartbeat(t) {
 }
 
 function chaseAttractor(pt) {
+  const focus = stageFocus();
   return {
-    x: clamp(pt.x, W * 0.28, W * 0.68),
-    y: clamp(pt.y - MIN * 0.08, H * 0.22, H * 0.52),
+    x: clamp(pt.x, focus.x - MIN * 0.1, focus.x + MIN * 0.1),
+    y: clamp(pt.y - MIN * 0.04, focus.y - MIN * 0.08, focus.y + MIN * 0.08),
   };
 }
 
@@ -879,14 +880,15 @@ function frame(now) {
   if (mode !== prevMode) { modeEnterTime = now; prevMode = mode; elMode.textContent = MODE_LABEL[mode]; }
   const bloom = (() => { const e = clamp((now - modeEnterTime) / 900, 0, 1); return 1 - Math.pow(1 - e, 3); })();
 
-  const center = { x: W * 0.48, y: H * (W < 960 ? 0.38 : 0.42) }; let scale = MIN * 0.24, angle = 0;
+  const focus = stageFocus();
+  const center = { ...focus }; let scale = MIN * 0.24, angle = 0;
   const h0 = hands[0], mouseActive = now - mouse.lastMove < 6500 && mouse.y < H - (W < 960 ? 320 : 220);
-  const handCenter = h0 ? h0.stagePalm : (mouseActive ? mouse : center);
+  const handCenter = h0 ? focus : (mouseActive ? mouse : center);
   if (mode === 'rose')        { Object.assign(center, handCenter); scale = MIN * 0.18 * (0.25 + 0.75*bloom); angle = t * 0.12; }
   else if (mode === 'arrow')  { Object.assign(center, handCenter); scale = MIN * 0.19; angle = h0 ? h0.stageDir : -0.5; }
   else if (mode === 'gather') { Object.assign(center, handCenter); scale = MIN * 0.1 * (0.6 + 0.4*beat); }
   else if (mode === 'doubleheart') {
-    if (hands.length >= 2) { center.x = (hands[0].stagePalm.x+hands[1].stagePalm.x)/2; center.y = (hands[0].stagePalm.y+hands[1].stagePalm.y)/2; }
+    if (hands.length >= 2) Object.assign(center, focus);
     else Object.assign(center, mouseActive ? mouse : center);
     scale = MIN * 0.19 * (0.4 + 0.6*bloom);
   }

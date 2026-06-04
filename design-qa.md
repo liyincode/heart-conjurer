@@ -13,6 +13,7 @@
 - Mobile tuned heart effect: `/Users/liyin/workspace/claude-code-test/heart-conjurer/design-captures/effect-heart-mobile.png`
 - Desktop resized arrow QA: `/Users/liyin/workspace/claude-code-test/heart-conjurer/design-captures/qa-arrow-resized.png`
 - Desktop resized chase QA: `/Users/liyin/workspace/claude-code-test/heart-conjurer/design-captures/qa-chase-resized.png`
+- Desktop DPR canvas fix QA: `/Users/liyin/workspace/claude-code-test/heart-conjurer/design-captures/qa-canvas-dpr-fix.png`
 
 **Viewport**
 - Desktop: 1440 x 1024
@@ -47,6 +48,8 @@
 - Tuned the chase mode so the fingertip pulls a complete heart field instead of a loose cluster of particles.
 - Mapped camera hand landmarks into a central stage-safe area before driving the main effects, so hands recognized lower in the preview no longer drag the effect below the visual center.
 - Reduced hand-driven formation scale, chase heart scale, pointer rings, and glow radius so recognized effects no longer fill most of the window.
+- Fixed the main canvas CSS size so the DPR-scaled backing buffer is rendered into the actual viewport instead of appearing 1.5x larger and shifting effects down/right.
+- Anchored hand-driven formations to the stage center, while keeping hand position for small pointer feedback and arrow direction.
 
 **Follow-up Polish**
 - A future pass could tune the preview panel size after testing with a real camera feed on the target display.
