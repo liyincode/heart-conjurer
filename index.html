@@ -131,6 +131,24 @@
     background: var(--cyan); box-shadow: 0 0 18px rgba(24, 239, 216, .9);
   }
   #status b { color: #8af7ff; font-weight: 680; }
+  #repoLink {
+    position: fixed; z-index: 6; top: 28px; right: 282px;
+    width: 48px; height: 48px; display: grid; place-items: center;
+    color: rgba(246, 237, 247, .92); text-decoration: none;
+    border-radius: 999px; border: 1px solid rgba(134, 189, 255, .2);
+    background: rgba(6, 12, 24, .7);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), 0 18px 48px rgba(0,0,0,.28);
+    transition: transform .15s ease, border-color .2s ease, box-shadow .2s ease, color .2s ease;
+  }
+  #repoLink:hover {
+    transform: translateY(-1px);
+    color: #fff4fa;
+    border-color: rgba(255, 142, 194, .55);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), 0 0 34px rgba(255, 79, 150, .18);
+  }
+  #repoLink:focus-visible { outline: 2px solid rgba(24, 239, 216, .8); outline-offset: 3px; }
+  #repoLink svg { width: 22px; height: 22px; fill: currentColor; display: block; }
 
   #mode {
     display: grid; gap: 10px; justify-items: center; align-content: center;
@@ -275,6 +293,8 @@
 
   @media (max-width: 960px) {
     #status { top: 18px; right: 18px; min-height: 38px; font-size: 12px; padding: 8px 12px; }
+    #repoLink { top: 18px; left: 18px; right: auto; width: 38px; height: 38px; }
+    #repoLink svg { width: 19px; height: 19px; }
     #cameraPanel { right: 12px; bottom: 324px; width: 160px; border-radius: 16px; }
     .camera-head { top: 7px; left: 9px; right: 9px; font-size: 9px; }
     .camera-distance { left: 9px; right: 9px; bottom: 7px; min-height: 22px; font-size: 9px; }
@@ -306,6 +326,11 @@
   </div>
   <div id="vignette"></div>
 
+  <a id="repoLink" href="https://github.com/liyincode/heart-conjurer" target="_blank" rel="noopener noreferrer" aria-label="打开 GitHub 仓库" title="GitHub 仓库">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 .5A11.5 11.5 0 0 0 8.36 22.9c.58.11.79-.25.79-.56v-2.02c-3.22.7-3.9-1.38-3.9-1.38-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.04 1.77 2.72 1.26 3.38.96.11-.75.41-1.26.74-1.55-2.57-.29-5.27-1.29-5.27-5.72 0-1.26.45-2.3 1.19-3.11-.12-.29-.52-1.47.11-3.07 0 0 .98-.31 3.18 1.19A10.96 10.96 0 0 1 12 6.05c.98 0 1.96.13 2.88.39 2.2-1.5 3.17-1.19 3.17-1.19.64 1.6.24 2.78.12 3.07.74.81 1.19 1.85 1.19 3.11 0 4.45-2.71 5.42-5.29 5.71.42.36.8 1.08.8 2.17v3.03c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/>
+    </svg>
+  </a>
   <div id="status">准备识别 · <b>低延迟</b></div>
 
   <div id="legend">
